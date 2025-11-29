@@ -1,0 +1,60 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.SignalR
+@inject IJSRuntime JS
+
+<PageTitle>Home</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<hr>
+
+<InputFile OnChange="LoadFile"/>
+<InputText @bind-value="fileUrl" />
+
+<p>@fileName</p>
+<p>@progress</p>
+
+<video width="320" height="240" controls id="video_comp" src="@fileUrl">
+    <source src="@fileUrl" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
+
+@code {
+    private string fileName { get; set; }
+
+    private string fileUrl { get; set; }
+
+    private double progress;
+
+    private async void LoadFile(InputFileChangeEventArgs e)
+    {
+        Stream fileData = e.File.OpenReadStream(long.MaxValue);
+
+        FileStream fs = File.Create($"D:\\WatchTogether3_files\\{e.File.Name}");
+        Task.Run(async () =>
+        {
+            while (fileData.Position < fileData.Length)
+            {
+                progress = (double)fileData.Position / fileData.Length * 100;
+                InvokeAsync(StateHasChanged);
+
+                await Task.Delay(100);
+            }
+        });
+
+        await fileData.CopyToAsync(fs);
+
+        fileName = e.File.Name + " uploaded";
+        fs.Close();
+        fileData.Close();
+
+        fileUrl = "api/Videos/get/" + e.File.Name;
+
+        await Task.Delay(100);
+
+        await InvokeAsync(StateHasChanged);
+    }
+}
