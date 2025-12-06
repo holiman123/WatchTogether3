@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using WatchTogether3.Components;
 using WatchTogether3.Components.Account;
 using WatchTogether3.Data;
+using WatchTogether3.Hubs;
 
 namespace WatchTogether3
 {
@@ -46,6 +47,8 @@ namespace WatchTogether3
 
             builder.Services.AddControllers();
 
+            builder.Services.AddSignalR();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -74,6 +77,8 @@ namespace WatchTogether3
             
             
             app.MapControllers();
+
+            app.MapHub<VideoHub>("/videohub");
 
             app.Run();
         }

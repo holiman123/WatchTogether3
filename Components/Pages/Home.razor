@@ -1,7 +1,11 @@
 ﻿@page "/"
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR
+@using Microsoft.AspNetCore.SignalR.Client
+@using WatchTogether3.Data
 @inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject ApplicationDbContext DbContext
 
 <PageTitle>Home</PageTitle>
 
@@ -15,12 +19,46 @@ Welcome to your new app.
 <InputText @bind-value="fileUrl" />
 
 <p>@fileName</p>
+<p>@fileUrl</p>
 <p>@progress</p>
 
-<video width="320" height="240" controls id="video_comp" src="@fileUrl">
+<video width="320" height="240" controls id="video_comp" src="@fileUrl" onpause="OnPauseClick()" onplay="OnVideoProceedClick()">
     <source src="@fileUrl" type="video/mp4">
     Your browser does not support the video tag.
 </video>
+
+<script>
+
+    var GLOBAL = {};
+    GLOBAL.dotnetHelper = null;
+    function setDotnetReference(dotnetRef) {
+        GLOBAL.dotnetHelper = dotnetRef;
+    }
+
+    var video = document.getElementById("video_comp");
+
+    function VideoPaused(time) {
+        video.pause();
+        video.currentTime = time;
+    }
+
+    function OnPauseClick() {
+        if (GLOBAL.dotnetHelper != null) {
+            GLOBAL.dotnetHelper.invokeMethodAsync('OnPauseClick', video.currentTime);
+        }
+    }
+
+    function VideoProceeded() {
+        video.play();
+    }
+
+    function OnVideoProceedClick() {
+        if (GLOBAL.dotnetHelper != null) {
+            GLOBAL.dotnetHelper.invokeMethodAsync('OnVideoProceedClick');
+        }
+    }
+
+</script>
 
 @code {
     private string fileName { get; set; }
@@ -28,6 +66,51 @@ Welcome to your new app.
     private string fileUrl { get; set; }
 
     private double progress;
+
+    private HubConnection hub;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (File.Exists("CurrentVideoUrl.txt"))
+                fileUrl = File.ReadAllText("CurrentVideoUrl.txt");
+
+
+            var lDotNetReference = DotNetObjectReference.Create(this);
+            JS.InvokeVoidAsync("setDotnetReference", lDotNetReference);
+
+
+            hub = new HubConnectionBuilder().WithUrl(Navigation.ToAbsoluteUri("/videohub")).Build();
+
+            hub.On("VideoPaused", (double time) =>
+            {
+                JS.InvokeVoidAsync("VideoPaused", time);
+            });
+            hub.On("VideoProceeded", () =>
+            {
+                JS.InvokeVoidAsync("VideoProceeded");
+            });
+
+            hub.StartAsync().Wait();
+
+            InvokeAsync(StateHasChanged);
+        }
+
+        base.OnAfterRender(firstRender);
+    }
+
+    [JSInvokable]
+    public void OnPauseClick(double time)
+    {
+        hub.SendAsync("Paused", time);
+    }
+
+    [JSInvokable]
+    public void OnVideoProceedClick()
+    {
+        hub.SendAsync("Proceeded");
+    }
 
     private async void LoadFile(InputFileChangeEventArgs e)
     {
@@ -52,6 +135,7 @@ Welcome to your new app.
         fileData.Close();
 
         fileUrl = "api/Videos/get/" + e.File.Name;
+        File.WriteAllText("CurrentVideoUrl.txt", fileUrl);
 
         await Task.Delay(100);
 

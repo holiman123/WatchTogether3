@@ -13,7 +13,7 @@ public class VideosController : ControllerBase
     }
 
     [HttpGet("get/{name}")]
-    public IResult Get(string name)
+    public IResult GetVideoStream(string name)
     {
         var stream = new FileStream($"D:\\WatchTogether3_files\\{name}", FileMode.Open, FileAccess.Read);
 
