@@ -9,18 +9,18 @@ public class VideoHub : Hub
         _ = 0;
     }
 
-    public async Task SendVideoTime(double time)
-    {
-        await Clients.Others.SendAsync("ReceiveVideoTime", time);
-    }
-
     public async Task Paused(double time)
     {
-        await Clients.Others.SendAsync("VideoPaused", time);
+        await Clients.Others.SendAsync("PauseFromHub", time);
     }
 
     public async Task Proceeded()
     {
-        await Clients.Others.SendAsync("VideoProceeded");
+        await Clients.Others.SendAsync("ProceedFromHub");
+    }
+
+    public async Task Seeked(double time)
+    {
+        await Clients.Others.SendAsync("SeekFromHub", time);
     }
 }

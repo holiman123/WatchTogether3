@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR
 @using Microsoft.AspNetCore.SignalR.Client
+@using System.Text.Json
 @using WatchTogether3.Data
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
@@ -22,42 +23,67 @@ Welcome to your new app.
 <p>@fileUrl</p>
 <p>@progress</p>
 
-<video width="320" height="240" controls id="video_comp" src="@fileUrl" onpause="OnPauseClick()" onplay="OnVideoProceedClick()">
+<video width="320" height="240" controls id="video_comp" src="@fileUrl" 
+        onpause="OnPauseClick()" 
+        onplay="OnProceedClick()"
+        onseeked="OnSeekClick()">
     <source src="@fileUrl" type="video/mp4">
     Your browser does not support the video tag.
 </video>
 
-<script>
+<button onclick="test()">press!</button>
 
-    var GLOBAL = {};
-    GLOBAL.dotnetHelper = null;
-    function setDotnetReference(dotnetRef) {
-        GLOBAL.dotnetHelper = dotnetRef;
+<script>
+    function test() {
+        video.currentTime = 10;
     }
+
+    var UserActions = Object.freeze({
+        PauseVideo: 0,
+        ProceedVideo: 1,
+        SeekVideo: 2
+    });
+
+    // DotNet reference holder
+    var dnh = null;
+    function setDotnetReference(dotnetRef) {
+        dnh = dotnetRef;
+    }
+
+    function SendAction(action, ...args) {
+        if (dnh == null)
+            return;
+
+        dnh.invokeMethodAsync('ReceiveAction', action, args);
+    }
+
 
     var video = document.getElementById("video_comp");
 
-    function VideoPaused(time) {
+
+    function PauseVideo(time) {
         video.pause();
         video.currentTime = time;
     }
-
     function OnPauseClick() {
-        if (GLOBAL.dotnetHelper != null) {
-            GLOBAL.dotnetHelper.invokeMethodAsync('OnPauseClick', video.currentTime);
-        }
+        SendAction(UserActions.PauseVideo, video.currentTime);
     }
 
-    function VideoProceeded() {
+
+    function ProceedVideo() {
         video.play();
     }
-
-    function OnVideoProceedClick() {
-        if (GLOBAL.dotnetHelper != null) {
-            GLOBAL.dotnetHelper.invokeMethodAsync('OnVideoProceedClick');
-        }
+    function OnProceedClick() {
+        SendAction(UserActions.ProceedVideo);
     }
 
+
+    function SeekVideo(time) {
+        video.currentTime = time;
+    }
+    function OnSeekClick() {
+        SendAction(UserActions.SeekVideo, video.currentTime);
+    }
 </script>
 
 @code {
@@ -68,6 +94,8 @@ Welcome to your new app.
     private double progress;
 
     private HubConnection hub;
+
+    private bool isActionReceivable = true;
 
     protected override void OnAfterRender(bool firstRender)
     {
@@ -83,13 +111,20 @@ Welcome to your new app.
 
             hub = new HubConnectionBuilder().WithUrl(Navigation.ToAbsoluteUri("/videohub")).Build();
 
-            hub.On("VideoPaused", (double time) =>
+            hub.On("PauseFromHub", (double time) =>
             {
-                JS.InvokeVoidAsync("VideoPaused", time);
+                isActionReceivable = false;
+                JS.InvokeVoidAsync("PauseVideo", time);
             });
-            hub.On("VideoProceeded", () =>
+            hub.On("ProceedFromHub", () =>
             {
-                JS.InvokeVoidAsync("VideoProceeded");
+                isActionReceivable = false;
+                JS.InvokeVoidAsync("ProceedVideo");
+            });
+            hub.On("SeekFromHub", (double time) =>
+            {
+                isActionReceivable = false;
+                JS.InvokeVoidAsync("SeekVideo", time);
             });
 
             hub.StartAsync().Wait();
@@ -101,15 +136,33 @@ Welcome to your new app.
     }
 
     [JSInvokable]
-    public void OnPauseClick(double time)
+    public void ReceiveAction(UserActions2 actions, params JsonElement[] args)
     {
-        hub.SendAsync("Paused", time);
-    }
+        if (isActionReceivable)
+        {
+            switch (actions)
+            {
+                case UserActions2.PauseVideo:
+                    {
+                        double time = args[0].GetDouble();
+                        hub.SendAsync("Paused", time);
+                        break;
+                    }
+                case UserActions2.ProceedVideo:
+                    {
+                        hub.SendAsync("Proceeded");
+                        break;
+                    }
+                case UserActions2.SeekVideo:
+                    {
+                        double time = args[0].GetDouble();
+                        hub.SendAsync("Seeked", time);
+                        break;
+                    }
+            }
+        }
 
-    [JSInvokable]
-    public void OnVideoProceedClick()
-    {
-        hub.SendAsync("Proceeded");
+        isActionReceivable = true;
     }
 
     private async void LoadFile(InputFileChangeEventArgs e)
@@ -140,5 +193,12 @@ Welcome to your new app.
         await Task.Delay(100);
 
         await InvokeAsync(StateHasChanged);
+    }
+
+    public enum UserActions2
+    {
+        PauseVideo,
+        ProceedVideo,
+        SeekVideo
     }
 }
