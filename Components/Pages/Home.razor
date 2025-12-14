@@ -1,211 +1,46 @@
 ﻿@page "/"
-@rendermode InteractiveServer
-@using Microsoft.AspNetCore.SignalR
-@using Microsoft.AspNetCore.SignalR.Client
-@using System.Text.Json
 @using WatchTogether3.Data
-@inject IJSRuntime JS
+@rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject ApplicationDbContext DbContext
 
-<PageTitle>Home</PageTitle>
+<PageTitle>List</PageTitle>
 
-<h1>Hello, world!</h1>
+<p>Create room form:</p>
+<form>
+    <label for="roomName">Room Name:</label>
+    <input type="text" id="roomName" name="roomName" @bind="roomName" />
+    <br />
+    <button type="button" @onclick="CreateRoom">Create Room</button>
+</form>
 
-Welcome to your new app.
-
-<hr>
-
-<InputFile OnChange="LoadFile"/>
-<InputText @bind-value="fileUrl" />
-
-<p>@fileName</p>
-<p>@fileUrl</p>
-<p>@progress</p>
-
-<video width="320" height="240" controls id="video_comp" src="@fileUrl" 
-        onpause="OnPauseClick()" 
-        onplay="OnProceedClick()"
-        onseeked="OnSeekClick()">
-    <source src="@fileUrl" type="video/mp4">
-    Your browser does not support the video tag.
-</video>
-
-<button onclick="test()">press!</button>
+@foreach (Data.Room room in DbContext.Rooms)
+{
+    <br/>
+    <p>@room.Name</p>
+    <button @onclick="() => GoToRoom(room.Name)">Join Room</button>
+}
 
 <script>
-    function test() {
-        video.currentTime = 10;
-    }
-
-    var UserActions = Object.freeze({
-        PauseVideo: 0,
-        ProceedVideo: 1,
-        SeekVideo: 2
-    });
-
-    // DotNet reference holder
-    var dnh = null;
-    function setDotnetReference(dotnetRef) {
-        dnh = dotnetRef;
-    }
-
-    function SendAction(action, ...args) {
-        if (dnh == null)
-            return;
-
-        dnh.invokeMethodAsync('ReceiveAction', action, args);
-    }
-
-
-    var video = document.getElementById("video_comp");
-
-
-    function PauseVideo(time) {
-        video.pause();
-        video.currentTime = time;
-    }
-    function OnPauseClick() {
-        SendAction(UserActions.PauseVideo, video.currentTime);
-    }
-
-
-    function ProceedVideo() {
-        video.play();
-    }
-    function OnProceedClick() {
-        SendAction(UserActions.ProceedVideo);
-    }
-
-
-    function SeekVideo(time) {
-        video.currentTime = time;
-    }
-    function OnSeekClick() {
-        SendAction(UserActions.SeekVideo, video.currentTime);
-    }
+    
 </script>
 
 @code {
-    private string fileName { get; set; }
+    private string roomName = string.Empty;
 
-    private string fileUrl { get; set; }
-
-    private double progress;
-
-    private HubConnection hub;
-
-    private bool isActionReceivable = true;
-
-    protected override void OnAfterRender(bool firstRender)
+    private void CreateRoom()
     {
-        if (firstRender)
+        DbContext.Rooms.Add(new Data.Room { Name = roomName });
+        DbContext.SaveChanges();
+
+        if (!string.IsNullOrWhiteSpace(roomName))
         {
-            if (File.Exists("CurrentVideoUrl.txt"))
-                fileUrl = File.ReadAllText("CurrentVideoUrl.txt");
-
-
-            var lDotNetReference = DotNetObjectReference.Create(this);
-            JS.InvokeVoidAsync("setDotnetReference", lDotNetReference);
-
-
-            hub = new HubConnectionBuilder().WithUrl(Navigation.ToAbsoluteUri("/videohub")).Build();
-
-            hub.On("PauseFromHub", (double time) =>
-            {
-                isActionReceivable = false;
-                JS.InvokeVoidAsync("PauseVideo", time);
-            });
-            hub.On("ProceedFromHub", () =>
-            {
-                isActionReceivable = false;
-                JS.InvokeVoidAsync("ProceedVideo");
-            });
-            hub.On("SeekFromHub", (double time) =>
-            {
-                isActionReceivable = false;
-                JS.InvokeVoidAsync("SeekVideo", time);
-            });
-            hub.On("VideoChangedFromHub", (string url) =>
-            {
-                fileUrl = url;
-                InvokeAsync(StateHasChanged);
-            });
-
-            hub.StartAsync().Wait();
-
-            InvokeAsync(StateHasChanged);
+            Navigation.NavigateTo($"/Room/{roomName}");
         }
-
-        base.OnAfterRender(firstRender);
     }
 
-    [JSInvokable]
-    public void ReceiveAction(UserActions2 actions, params JsonElement[] args)
+    private void GoToRoom(string name)
     {
-        if (isActionReceivable)
-        {
-            switch (actions)
-            {
-                case UserActions2.PauseVideo:
-                    {
-                        double time = args[0].GetDouble();
-                        hub.SendAsync("Paused", time);
-                        break;
-                    }
-                case UserActions2.ProceedVideo:
-                    {
-                        hub.SendAsync("Proceeded");
-                        break;
-                    }
-                case UserActions2.SeekVideo:
-                    {
-                        double time = args[0].GetDouble();
-                        hub.SendAsync("Seeked", time);
-                        break;
-                    }
-            }
-        }
-
-        isActionReceivable = true;
-    }
-
-    private async void LoadFile(InputFileChangeEventArgs e)
-    {
-        Stream fileData = e.File.OpenReadStream(long.MaxValue);
-
-        FileStream fs = File.Create($"D:\\WatchTogether3_files\\{e.File.Name}");
-        Task.Run(async () =>
-        {
-            while (fileData.Position < fileData.Length)
-            {
-                progress = (double)fileData.Position / fileData.Length * 100;
-                InvokeAsync(StateHasChanged);
-
-                await Task.Delay(100);
-            }
-        });
-
-        await fileData.CopyToAsync(fs);
-
-        fileName = e.File.Name + " uploaded";
-        fs.Close();
-        fileData.Close();
-
-        fileUrl = "api/Videos/get/" + e.File.Name;
-        File.WriteAllText("CurrentVideoUrl.txt", fileUrl);
-
-        hub.SendAsync("VideoChanged", fileUrl);
-
-        await Task.Delay(100);
-
-        await InvokeAsync(StateHasChanged);
-    }
-
-    public enum UserActions2
-    {
-        PauseVideo,
-        ProceedVideo,
-        SeekVideo
+        Navigation.NavigateTo($"/Room/{name}");
     }
 }
