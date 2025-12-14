@@ -126,6 +126,11 @@ Welcome to your new app.
                 isActionReceivable = false;
                 JS.InvokeVoidAsync("SeekVideo", time);
             });
+            hub.On("VideoChangedFromHub", (string url) =>
+            {
+                fileUrl = url;
+                InvokeAsync(StateHasChanged);
+            });
 
             hub.StartAsync().Wait();
 
@@ -189,6 +194,8 @@ Welcome to your new app.
 
         fileUrl = "api/Videos/get/" + e.File.Name;
         File.WriteAllText("CurrentVideoUrl.txt", fileUrl);
+
+        hub.SendAsync("VideoChanged", fileUrl);
 
         await Task.Delay(100);
 

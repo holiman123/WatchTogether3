@@ -23,4 +23,9 @@ public class VideoHub : Hub
     {
         await Clients.Others.SendAsync("SeekFromHub", time);
     }
+
+    public async Task VideoChanged(string videoUrl)
+    {
+        await Clients.Others.SendAsync("VideoChangedFromHub", videoUrl);
+    }
 }
