@@ -9,33 +9,33 @@ public class VideoHub : Hub
         _ = 0;
     }
 
-    public async Task EnterGroup(string groupName)
+    public async Task EnterRoom(string roomName)
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+        await Groups.AddToGroupAsync(Context.ConnectionId, roomName);
     }
 
-    public async Task LeaveGroup(string groupName)
+    public async Task LeaveRoom(string roomName)
     {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomName);
     }
 
-    public async Task Paused(double time)
+    public async Task Paused(string roomName, double time)
     {
-        await Clients.Others.SendAsync("PauseFromHub", time);
+        await Clients.OthersInGroup(roomName).SendAsync("PauseFromHub", time);
     }
 
-    public async Task Proceeded()
+    public async Task Proceeded(string roomName)
     {
-        await Clients.Others.SendAsync("ProceedFromHub");
+        await Clients.OthersInGroup(roomName).SendAsync("ProceedFromHub");
     }
 
-    public async Task Seeked(double time)
+    public async Task Seeked(string roomName, double time)
     {
-        await Clients.Others.SendAsync("SeekFromHub", time);
+        await Clients.OthersInGroup(roomName).SendAsync("SeekFromHub", time);
     }
 
-    public async Task VideoChanged(string videoUrl)
+    public async Task VideoChanged(string roomName, string videoUrl)
     {
-        await Clients.Others.SendAsync("VideoChangedFromHub", videoUrl);
+        await Clients.OthersInGroup(roomName).SendAsync("VideoChangedFromHub", videoUrl);
     }
 }

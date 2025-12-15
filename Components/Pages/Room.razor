@@ -7,6 +7,7 @@
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 @inject ApplicationDbContext DbContext
+@implements IDisposable
 
 <PageTitle>Home</PageTitle>
 
@@ -31,12 +32,7 @@ Welcome to your new app.
     Your browser does not support the video tag.
 </video>
 
-<button onclick="test()">press!</button>
-
 <script>
-    function test() {
-        video.currentTime = 10;
-    }
 
     var UserActions = Object.freeze({
         PauseVideo: 0,
@@ -49,6 +45,7 @@ Welcome to your new app.
     function setDotnetReference(dotnetRef) {
         dnh = dotnetRef;
     }
+
 
     function SendAction(action, ...args) {
         if (dnh == null)
@@ -104,8 +101,10 @@ Welcome to your new app.
     {
         if (firstRender)
         {
-            if (File.Exists("CurrentVideoUrl.txt"))
-                fileUrl = File.ReadAllText("CurrentVideoUrl.txt");
+            // if (File.Exists("CurrentVideoUrl.txt"))
+            //     fileUrl = File.ReadAllText("CurrentVideoUrl.txt");
+            if (DbContext.Rooms.Find(roomName)?.VideoUrl is string url)
+                fileUrl = url;
 
 
             var lDotNetReference = DotNetObjectReference.Create(this);
@@ -137,6 +136,9 @@ Welcome to your new app.
 
             hub.StartAsync().Wait();
 
+            // Enter room
+            hub.InvokeAsync("EnterRoom", roomName).Wait();
+
             InvokeAsync(StateHasChanged);
         }
 
@@ -153,18 +155,18 @@ Welcome to your new app.
                 case UserActions2.PauseVideo:
                     {
                         double time = args[0].GetDouble();
-                        hub.SendAsync("Paused", time);
+                        hub.SendAsync("Paused", roomName, time);
                         break;
                     }
                 case UserActions2.ProceedVideo:
                     {
-                        hub.SendAsync("Proceeded");
+                        hub.SendAsync("Proceeded", roomName);
                         break;
                     }
                 case UserActions2.SeekVideo:
                     {
                         double time = args[0].GetDouble();
-                        hub.SendAsync("Seeked", time);
+                        hub.SendAsync("Seeked", roomName, time);
                         break;
                     }
             }
@@ -196,13 +198,21 @@ Welcome to your new app.
         fileData.Close();
 
         fileUrl = "api/Videos/get/" + e.File.Name;
-        File.WriteAllText("CurrentVideoUrl.txt", fileUrl);
+        //File.WriteAllText("CurrentVideoUrl.txt", fileUrl);
+        DbContext.Rooms.Find(roomName)?.VideoUrl = fileUrl;
+        DbContext.SaveChanges();
 
-        hub.SendAsync("VideoChanged", fileUrl);
+        hub.SendAsync("VideoChanged", roomName, fileUrl);
 
         await Task.Delay(100);
 
         await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        if (hub is not null)
+            hub.SendAsync("LeaveRoom", roomName);
     }
 
     public enum UserActions2
