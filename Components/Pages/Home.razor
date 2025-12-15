@@ -30,6 +30,9 @@
 
     private void CreateRoom()
     {
+        if (roomName == string.Empty)
+            return;
+
         DbContext.Rooms.Add(new Data.Room { Name = roomName });
         DbContext.SaveChanges();
 

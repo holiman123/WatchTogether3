@@ -32,6 +32,10 @@ Welcome to your new app.
     Your browser does not support the video tag.
 </video>
 
+<hr>
+
+<button @onclick="RemoveRoom">Remove room</button>
+
 <script>
 
     var UserActions = Object.freeze({
@@ -207,6 +211,17 @@ Welcome to your new app.
         await Task.Delay(100);
 
         await InvokeAsync(StateHasChanged);
+    }
+
+    private void RemoveRoom()
+    {
+        var room = DbContext.Rooms.Find(roomName);
+        if (room is not null)
+        {
+            DbContext.Rooms.Remove(room);
+            DbContext.SaveChanges();
+        }
+        Navigation.NavigateTo("/");
     }
 
     public void Dispose()
