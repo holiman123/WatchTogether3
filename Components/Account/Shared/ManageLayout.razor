@@ -1,6 +1,13 @@
 ﻿@inherits LayoutComponentBase
 @layout WatchTogether3.Components.Layout.MainLayout
 
+@using Microsoft.AspNetCore.Identity
+@using WatchTogether3.Data
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager Navigation
+
 <h1>Manage your account</h1>
 
 <div>
@@ -13,5 +20,18 @@
         <div class="col-lg-9">
             @Body
         </div>
+        <form method="post" @onsubmit="Logout" @formname="logout-form">
+            <AntiforgeryToken/>
+            <button type="submit">Logout</button>
+        </form>
     </div>
 </div>
+
+@code
+{
+    public async Task Logout()
+    {
+        await SignInManager.SignOutAsync();
+        Navigation.NavigateTo("/");
+    }
+}

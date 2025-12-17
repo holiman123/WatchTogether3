@@ -12,8 +12,8 @@ using WatchTogether3.Data;
 namespace WatchTogether3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251129132706_mssql.local_migration_981")]
-    partial class mssqllocal_migration_981
+    [Migration("20251217191911_mssql.local_migration_606")]
+    partial class mssqllocal_migration_606
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -245,6 +245,30 @@ namespace WatchTogether3.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("WatchTogether3.Data.Room", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ApplicationUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("OwnerId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("VideoUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Name");
+
+                    b.HasIndex("ApplicationUserId");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("Rooms");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -343,6 +367,24 @@ namespace WatchTogether3.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("WatchTogether3.Data.Room", b =>
+                {
+                    b.HasOne("WatchTogether3.Data.ApplicationUser", null)
+                        .WithMany("Rooms")
+                        .HasForeignKey("ApplicationUserId");
+
+                    b.HasOne("WatchTogether3.Data.ApplicationUser", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId");
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("WatchTogether3.Data.ApplicationUser", b =>
+                {
+                    b.Navigation("Rooms");
                 });
 #pragma warning restore 612, 618
         }

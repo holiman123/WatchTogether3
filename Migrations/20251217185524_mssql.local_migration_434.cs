@@ -5,7 +5,7 @@
 namespace WatchTogether3.Migrations
 {
     /// <inheritdoc />
-    public partial class mssqllocal_migration_981 : Migration
+    public partial class mssqllocal_migration_434 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

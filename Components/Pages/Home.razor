@@ -1,18 +1,36 @@
 ﻿@page "/"
-@using WatchTogether3.Data
 @rendermode InteractiveServer
+
+@using System.Threading.Tasks
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
+@using WatchTogether3.Data
+
 @inject NavigationManager Navigation
 @inject ApplicationDbContext DbContext
+@inject AuthenticationStateProvider auth
+@inject UserManager<ApplicationUser> userManager
 
 <PageTitle>List</PageTitle>
 
-<p>Create room form:</p>
-<form>
-    <label for="roomName">Room Name:</label>
-    <input type="text" id="roomName" name="roomName" @bind="roomName" />
-    <br />
-    <button type="button" @onclick="CreateRoom">Create Room</button>
-</form>
+<AuthorizeView>
+    <Authorized>
+        <p>You logged in as @User.Identity.Name</p>
+        <NavLink href="Account/Manage">Manage</NavLink>
+        <hr/>
+
+        <p>Create room form:</p>
+        <form>
+            <label for="roomName">Room Name:</label>
+            <input type="text" id="roomName" name="roomName" @bind="roomName" />
+            <br />
+            <button type="button" @onclick="CreateRoom">Create Room</button>
+        </form>
+    </Authorized>
+    <NotAuthorized>
+        <NavLink href="Account/Login">Login</NavLink>
+    </NotAuthorized>
+</AuthorizeView>
 
 @foreach (Data.Room room in DbContext.Rooms)
 {
@@ -28,12 +46,35 @@
 @code {
     private string roomName = string.Empty;
 
+    private ClaimsPrincipal User { get; set; }
+
+    protected override void OnInitialized()
+    {
+        var state = auth.GetAuthenticationStateAsync().Result;
+        User = state.User;
+
+        base.OnInitialized();
+    }
+
     private void CreateRoom()
     {
         if (roomName == string.Empty)
             return;
 
-        DbContext.Rooms.Add(new Data.Room { Name = roomName });
+        var user = userManager.GetUserAsync(User).Result;
+
+        if (user is null)
+            return;
+
+        Data.Room newRoom = new Data.Room 
+        { 
+            Name = roomName,
+            Owner = user
+        };
+
+        DbContext.Rooms.Add(newRoom);
+        //user.Rooms.Add(newRoom);
+
         DbContext.SaveChanges();
 
         if (!string.IsNullOrWhiteSpace(roomName))

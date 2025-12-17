@@ -1,17 +1,27 @@
 ﻿@page "/Room/{roomName}"
 @rendermode InteractiveServer
+@implements IDisposable
+
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.SignalR
 @using Microsoft.AspNetCore.SignalR.Client
 @using System.Text.Json
+@using System.Security.Claims
 @using WatchTogether3.Data
+
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 @inject ApplicationDbContext DbContext
-@implements IDisposable
+@inject AuthenticationStateProvider authState
+@inject UserManager<ApplicationUser> userManager
+
+<AuthorizeView>
+    <p>Logged in as @User.UserName</p>
+</AuthorizeView>
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>@Owner?.UserName 's room</h1>
 
 Welcome to your new app.
 
@@ -34,7 +44,10 @@ Welcome to your new app.
 
 <hr>
 
-<button @onclick="RemoveRoom">Remove room</button>
+@if (User == Owner)
+{
+    <button @onclick="RemoveRoom">Remove room</button>
+}
 
 <script>
 
@@ -101,15 +114,30 @@ Welcome to your new app.
     [Parameter]
     public string roomName { get; set; }
 
+    private ApplicationUser User { get; set; }
+
+    private ApplicationUser Owner { get; set; }
+
+
+    protected override void OnInitialized()
+    {
+        var claims = authState.GetAuthenticationStateAsync().Result.User;
+
+        User = userManager.GetUserAsync(claims).Result;
+
+        if (DbContext.Rooms.Find(roomName) is Data.Room room)
+        {
+            fileUrl = room.VideoUrl;
+            Owner = room.Owner;
+        }
+
+        base.OnInitialized();
+    }
+
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
         {
-            // if (File.Exists("CurrentVideoUrl.txt"))
-            //     fileUrl = File.ReadAllText("CurrentVideoUrl.txt");
-            if (DbContext.Rooms.Find(roomName)?.VideoUrl is string url)
-                fileUrl = url;
-
 
             var lDotNetReference = DotNetObjectReference.Create(this);
             JS.InvokeVoidAsync("setDotnetReference", lDotNetReference);
