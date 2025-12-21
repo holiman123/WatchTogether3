@@ -9,6 +9,8 @@ namespace WatchTogether3.Data
 
         public string VideoUrl { get; set; } = string.Empty;
 
+        public List<string> UploadedVideoUrls { get; set; } = new List<string>();
+
         public ApplicationUser Owner { get; set; }
     }
 }

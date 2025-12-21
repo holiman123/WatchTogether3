@@ -21,30 +21,37 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>@Owner?.UserName 's room</h1>
+<h1>@RoomData.Owner?.UserName 's room</h1>
 
 Welcome to your new app.
 
 <hr>
 
 <InputFile OnChange="LoadFile" />
-<InputText @bind-value="fileUrl" />
+<InputText @bind-value="RoomData.VideoUrl" />
 
-<p>@fileName</p>
-<p>@fileUrl</p>
-<p>@progress</p>
+<p>progress: @progress</p>
 
-<video width="320" height="240" controls id="video_comp" src="@fileUrl"
+@foreach(string video in RoomData.UploadedVideoUrls)
+{
+    <button @onclick="() => {RoomData.VideoUrl = video;}">@video</button>
+    <br />
+}
+
+<br />
+<br/>
+
+<video width="320" height="240" controls id="video_comp" src="@RoomData.VideoUrl"
        onpause="OnPauseClick()"
        onplay="OnProceedClick()"
        onseeked="OnSeekClick()">
-    <source src="@fileUrl" type="video/mp4">
+    <source src="@RoomData.VideoUrl" type="video/mp4">
     Your browser does not support the video tag.
 </video>
 
 <hr>
 
-@if (User == Owner)
+@if (User == RoomData.Owner)
 {
     <button @onclick="RemoveRoom">Remove room</button>
 }
@@ -101,9 +108,7 @@ Welcome to your new app.
 </script>
 
 @code {
-    private string fileName { get; set; }
-
-    private string fileUrl { get; set; }
+    //private string fileUrl { get; set; }
 
     private double progress;
 
@@ -116,7 +121,9 @@ Welcome to your new app.
 
     private ApplicationUser User { get; set; }
 
-    private ApplicationUser Owner { get; set; }
+    //private ApplicationUser Owner { get; set; }
+
+    private Data.Room RoomData { get; set; }
 
 
     protected override void OnInitialized()
@@ -127,8 +134,7 @@ Welcome to your new app.
 
         if (DbContext.Rooms.Find(roomName) is Data.Room room)
         {
-            fileUrl = room.VideoUrl;
-            Owner = room.Owner;
+            RoomData = room;
         }
 
         base.OnInitialized();
@@ -162,7 +168,7 @@ Welcome to your new app.
             });
             hub.On("VideoChangedFromHub", (string url) =>
             {
-                fileUrl = url;
+                RoomData.VideoUrl = url;
                 InvokeAsync(StateHasChanged);
             });
 
@@ -225,16 +231,16 @@ Welcome to your new app.
 
         await fileData.CopyToAsync(fs);
 
-        fileName = e.File.Name + " uploaded";
         fs.Close();
         fileData.Close();
 
-        fileUrl = "api/Videos/get/" + e.File.Name;
+        RoomData.VideoUrl = "api/Videos/get/" + e.File.Name;
+        RoomData.UploadedVideoUrls.Add(RoomData.VideoUrl);
         //File.WriteAllText("CurrentVideoUrl.txt", fileUrl);
-        DbContext.Rooms.Find(roomName)?.VideoUrl = fileUrl;
+        DbContext.Rooms.Find(roomName)?.VideoUrl = RoomData.VideoUrl;
         DbContext.SaveChanges();
 
-        hub.SendAsync("VideoChanged", roomName, fileUrl);
+        hub.SendAsync("VideoChanged", roomName, RoomData.VideoUrl);
 
         await Task.Delay(100);
 
@@ -248,6 +254,15 @@ Welcome to your new app.
         {
             DbContext.Rooms.Remove(room);
             DbContext.SaveChanges();
+
+            foreach(string videoUrl in room.UploadedVideoUrls)
+            {
+                var filePath = Path.Combine("D:\\WatchTogether3_files\\", Path.GetFileName(videoUrl));
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
+            }
         }
         Navigation.NavigateTo("/");
     }
