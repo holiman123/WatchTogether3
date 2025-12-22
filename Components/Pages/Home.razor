@@ -72,8 +72,10 @@
             Owner = user
         };
 
+        if(DbContext.Rooms.Contains(newRoom))
+            return;
+
         DbContext.Rooms.Add(newRoom);
-        //user.Rooms.Add(newRoom);
 
         DbContext.SaveChanges();
 
