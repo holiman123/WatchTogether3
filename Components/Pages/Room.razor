@@ -49,6 +49,7 @@ Welcome to your new app.
     <source src="@RoomData.VideoUrl" type="video/mp4">
     Your browser does not support the video tag.
 </video>
+<button id="play_btn" style="visibility: hidden" onclick="requestInitVideo()">Play</button>
 
 <hr>
 
@@ -64,15 +65,39 @@ Welcome to your new app.
         SeekVideo: 2
     });
 
+    var video = document.getElementById("video_comp");
+
     // DotNet reference holder
     var dnh = null;
     function setDotnetReference(dotnetRef) {
         dnh = dotnetRef;
     }
 
-    function initVideo(time) {
+    function initVideo(time, isPlay) {
         video.currentTime = time;
-        video.setAttribute("controls", "");
+        if (isPlay) {
+            var promise = video.play();
+
+            if (promise !== undefined) {
+                promise.then(_ => {
+                    // Autoplay started!
+                    video.setAttribute("controls", "");
+                }).catch(error => {
+                    // Autoplay was prevented.
+                    // Show a "Play" button so that user can start playback.
+                    play_btn.style.visibility = "visible";
+                });
+            }
+        }
+        else {
+            video.setAttribute("controls", "");
+        }
+    }
+
+    function requestInitVideo()
+    {
+        dnh.invokeMethodAsync('InitVideo');
+        play_btn.style.visibility = "hidden";
     }
 
 
@@ -84,7 +109,6 @@ Welcome to your new app.
     }
 
 
-    var video = document.getElementById("video_comp");
 
     function PauseVideo(time) {
         video.pause();
@@ -179,8 +203,8 @@ Welcome to your new app.
             // Enter room
             hub.InvokeAsync("EnterRoom", roomName).Wait();
 
-            JS.InvokeVoidAsync("initVideo", RoomData.CurrentTime);
-            SendVideoPause(RoomData.CurrentTime);
+            InitVideo();
+            //SendVideoPause(RoomData.CurrentTime);
 
             InvokeAsync(StateHasChanged);
         }
@@ -216,6 +240,12 @@ Welcome to your new app.
         }
 
         isActionReceivable = true;
+    }
+
+    [JSInvokable]
+    public void InitVideo()
+    {
+        JS.InvokeVoidAsync("initVideo", RoomData.CurrentTime, RoomData.IsPlaying);
     }
 
     private void SendVideoPause(double time)
