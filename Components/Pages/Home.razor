@@ -69,7 +69,8 @@
         Data.Room newRoom = new Data.Room 
         { 
             Name = roomName,
-            Owner = user
+            Owner = user,
+            CreationDate = DateTime.Now
         };
 
         if(DbContext.Rooms.Contains(newRoom))

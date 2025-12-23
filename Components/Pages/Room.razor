@@ -41,10 +41,11 @@ Welcome to your new app.
 <br />
 <br/>
 
-<video width="320" height="240" controls id="video_comp" src="@RoomData.VideoUrl"
-       onpause="OnPauseClick()"
-       onplay="OnProceedClick()"
-       onseeked="OnSeekClick()">
+
+<video width="320" height="240" id="video_comp" src="@RoomData.VideoUrl"
+    onpause="OnPauseClick()"
+    onplay="OnProceedClick()"
+    onseeked="OnSeekClick()">
     <source src="@RoomData.VideoUrl" type="video/mp4">
     Your browser does not support the video tag.
 </video>
@@ -57,7 +58,6 @@ Welcome to your new app.
 }
 
 <script>
-
     var UserActions = Object.freeze({
         PauseVideo: 0,
         ProceedVideo: 1,
@@ -70,6 +70,11 @@ Welcome to your new app.
         dnh = dotnetRef;
     }
 
+    function initVideo(time) {
+        video.currentTime = time;
+        video.setAttribute("controls", "");
+    }
+
 
     function SendAction(action, ...args) {
         if (dnh == null)
@@ -80,7 +85,6 @@ Welcome to your new app.
 
 
     var video = document.getElementById("video_comp");
-
 
     function PauseVideo(time) {
         video.pause();
@@ -121,8 +125,6 @@ Welcome to your new app.
 
     private ApplicationUser User { get; set; }
 
-    //private ApplicationUser Owner { get; set; }
-
     private Data.Room RoomData { get; set; }
 
 
@@ -132,7 +134,8 @@ Welcome to your new app.
 
         User = userManager.GetUserAsync(claims).Result;
 
-        if (DbContext.Rooms.Find(roomName) is Data.Room room)
+        DbContext.ChangeTracker.Clear();
+        if (RoomData is null && DbContext.Rooms.Find(roomName) is Data.Room room)
         {
             RoomData = room;
         }
@@ -147,7 +150,6 @@ Welcome to your new app.
 
             var lDotNetReference = DotNetObjectReference.Create(this);
             JS.InvokeVoidAsync("setDotnetReference", lDotNetReference);
-
 
             hub = new HubConnectionBuilder().WithUrl(Navigation.ToAbsoluteUri("/videohub")).Build();
 
@@ -177,6 +179,9 @@ Welcome to your new app.
             // Enter room
             hub.InvokeAsync("EnterRoom", roomName).Wait();
 
+            JS.InvokeVoidAsync("initVideo", RoomData.CurrentTime);
+            SendVideoPause(RoomData.CurrentTime);
+
             InvokeAsync(StateHasChanged);
         }
 
@@ -193,24 +198,61 @@ Welcome to your new app.
                 case UserActions2.PauseVideo:
                     {
                         double time = args[0].GetDouble();
-                        hub.SendAsync("Paused", roomName, time);
+                        SendVideoPause(time);
                         break;
                     }
                 case UserActions2.ProceedVideo:
                     {
-                        hub.SendAsync("Proceeded", roomName);
+                        SendVideoProceed();
                         break;
                     }
                 case UserActions2.SeekVideo:
                     {
                         double time = args[0].GetDouble();
-                        hub.SendAsync("Seeked", roomName, time);
+                        SendVideoSeek(time);
                         break;
                     }
             }
         }
 
         isActionReceivable = true;
+    }
+
+    private void SendVideoPause(double time)
+    {
+        if (hub is null)
+            return;
+
+        hub.SendAsync("Paused", roomName, time);
+
+        RoomData.CurrentTime = time;
+        RoomData.IsPlaying = false;
+        DbContext.SaveChanges();
+    }
+    private void SendVideoProceed()
+    {
+        if (hub is null)
+            return;
+
+        hub.SendAsync("Proceeded", roomName);
+
+        RoomData.LastPlayTime = DateTime.Now;
+        RoomData.IsPlaying = true;
+        DbContext.SaveChanges();
+    }
+    private void SendVideoSeek(double time)
+    {
+        if (hub is null)
+            return;
+
+        hub.SendAsync("Seeked", roomName, time);
+
+        if (RoomData.IsPlaying)
+        {
+            RoomData.LastPlayTime = DateTime.Now;
+        }
+        RoomData.CurrentTime = time;
+        DbContext.SaveChanges();
     }
 
     private async void LoadFile(InputFileChangeEventArgs e)
@@ -270,7 +312,11 @@ Welcome to your new app.
     public void Dispose()
     {
         if (hub is not null)
+        {
             hub.SendAsync("LeaveRoom", roomName);
+            hub.StopAsync();
+            hub = null;
+        }
     }
 
     public enum UserActions2
