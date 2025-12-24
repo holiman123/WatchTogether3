@@ -35,6 +35,7 @@ Welcome to your new app.
 @foreach(string video in RoomData.UploadedVideoUrls)
 {
     <button @onclick="() => ChangeVideo(video)">@video</button>
+    <button @onclick="() => RemoveVideo(video)">X</button>
     <br />
 }
 
@@ -317,6 +318,19 @@ Welcome to your new app.
     private void ChangeVideo(string url)
     {
         RoomData.VideoUrl = url;
+        DbContext.SaveChanges();
+
+        hub.SendAsync("VideoChanged", roomName, RoomData.VideoUrl);
+    }
+
+    private void RemoveVideo(string url)
+    {
+        if (url == RoomData.VideoUrl)
+            RoomData.VideoUrl = string.Empty;
+
+        RoomData.UploadedVideoUrls.Remove(url);
+        DbContext.SaveChanges();
+
         hub.SendAsync("VideoChanged", roomName, RoomData.VideoUrl);
     }
 
