@@ -34,7 +34,7 @@ Welcome to your new app.
 
 @foreach(string video in RoomData.UploadedVideoUrls)
 {
-    <button @onclick="() => {RoomData.VideoUrl = video;}">@video</button>
+    <button @onclick="() => ChangeVideo(video)">@video</button>
     <br />
 }
 
@@ -158,11 +158,7 @@ Welcome to your new app.
 
         User = userManager.GetUserAsync(claims).Result;
 
-        DbContext.ChangeTracker.Clear();
-        if (RoomData is null && DbContext.Rooms.Find(roomName) is Data.Room room)
-        {
-            RoomData = room;
-        }
+        LoadRoomData();
 
         base.OnInitialized();
     }
@@ -194,7 +190,7 @@ Welcome to your new app.
             });
             hub.On("VideoChangedFromHub", (string url) =>
             {
-                RoomData.VideoUrl = url;
+                LoadRoomData();
                 InvokeAsync(StateHasChanged);
             });
 
@@ -204,7 +200,6 @@ Welcome to your new app.
             hub.InvokeAsync("EnterRoom", roomName).Wait();
 
             InitVideo();
-            //SendVideoPause(RoomData.CurrentTime);
 
             InvokeAsync(StateHasChanged);
         }
@@ -317,6 +312,21 @@ Welcome to your new app.
         await Task.Delay(100);
 
         await InvokeAsync(StateHasChanged);
+    }
+
+    private void ChangeVideo(string url)
+    {
+        RoomData.VideoUrl = url;
+        hub.SendAsync("VideoChanged", roomName, RoomData.VideoUrl);
+    }
+
+    private void LoadRoomData()
+    {
+        DbContext.ChangeTracker.Clear();
+        if (DbContext.Rooms.Find(roomName) is Data.Room room)
+        {
+            RoomData = room;
+        }
     }
 
     private void RemoveRoom()
