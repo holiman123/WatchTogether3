@@ -45,6 +45,8 @@ namespace WatchTogether3
 
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
+            builder.Services.AddSingleton<RoomsParticipantsService>();
+
             builder.Services.AddControllers();
 
             builder.Services.AddSignalR();

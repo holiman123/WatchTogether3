@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using WatchTogether3.Data;
 
 namespace WatchTogether3.Hubs;
 
@@ -9,14 +10,16 @@ public class VideoHub : Hub
         _ = 0;
     }
 
-    public async Task EnterRoom(string roomName)
+    public async Task EnterRoom(string roomName, string userId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, roomName);
+        await Clients.OthersInGroup(roomName).SendAsync("UserJoinedFromHub", userId);
     }
 
-    public async Task LeaveRoom(string roomName)
+    public async Task LeaveRoom(string roomName, string userId)
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomName);
+        await Clients.OthersInGroup(roomName).SendAsync("UserLeftFromHub", userId);
     }
 
     public async Task Paused(string roomName, double time)

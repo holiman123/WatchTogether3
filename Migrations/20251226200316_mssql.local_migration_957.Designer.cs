@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WatchTogether3.Data;
 
@@ -11,9 +12,11 @@ using WatchTogether3.Data;
 namespace WatchTogether3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251226200316_mssql.local_migration_957")]
+    partial class mssqllocal_migration_957
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -188,9 +191,6 @@ namespace WatchTogether3.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("CurrentRoomName")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -222,6 +222,9 @@ namespace WatchTogether3.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<string>("RoomName")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -234,8 +237,6 @@ namespace WatchTogether3.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CurrentRoomName");
-
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
 
@@ -243,6 +244,8 @@ namespace WatchTogether3.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.HasIndex("RoomName");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -385,11 +388,9 @@ namespace WatchTogether3.Migrations
 
             modelBuilder.Entity("WatchTogether3.Data.ApplicationUser", b =>
                 {
-                    b.HasOne("WatchTogether3.Data.Room", "CurrentRoom")
+                    b.HasOne("WatchTogether3.Data.Room", null)
                         .WithMany("Participants")
-                        .HasForeignKey("CurrentRoomName");
-
-                    b.Navigation("CurrentRoom");
+                        .HasForeignKey("RoomName");
                 });
 
             modelBuilder.Entity("WatchTogether3.Data.Room", b =>

@@ -14,6 +14,7 @@
 @inject ApplicationDbContext DbContext
 @inject AuthenticationStateProvider authState
 @inject UserManager<ApplicationUser> userManager
+@inject RoomsParticipantsService RoomsParticipants
 
 <AuthorizeView>
     <p>Logged in as @User.UserName</p>
@@ -57,6 +58,23 @@ Welcome to your new app.
 @if (User == RoomData.Owner)
 {
     <button @onclick="RemoveRoom">Remove room</button>
+}
+
+<hr />
+
+@if (RoomsParticipants.ContainsKey(roomName))
+{
+    foreach (ApplicationUser participant in RoomsParticipants[roomName])
+    {
+        if (participant is not null)
+        {
+            <p>@participant.UserName</p>
+        }
+        else
+        {
+            <p>Guest</p>
+        }
+    }
 }
 
 <script>
@@ -148,7 +166,7 @@ Welcome to your new app.
     [Parameter]
     public string roomName { get; set; }
 
-    private ApplicationUser User { get; set; }
+    private ApplicationUser? User { get; set; }
 
     private Data.Room RoomData { get; set; }
 
@@ -173,12 +191,19 @@ Welcome to your new app.
     {
         if (firstRender)
         {
-
             var lDotNetReference = DotNetObjectReference.Create(this);
             JS.InvokeVoidAsync("setDotnetReference", lDotNetReference);
 
             hub = new HubConnectionBuilder().WithUrl(Navigation.ToAbsoluteUri("/videohub")).Build();
 
+            hub.On("UserJoinedFromHub", (string userId) =>
+            {
+                InvokeAsync(StateHasChanged);
+            });
+            hub.On("UserLeftFromHub", (string userId) =>
+            {
+                InvokeAsync(StateHasChanged);
+            });
             hub.On("PauseFromHub", (double time) =>
             {
                 isActionReceivable = false;
@@ -217,7 +242,13 @@ Welcome to your new app.
             hub.StartAsync().Wait();
 
             // Enter room
-            hub.InvokeAsync("EnterRoom", roomName).Wait();
+            RoomsParticipants.AddRoomParticipant(roomName, User);
+
+            if (User is not null)
+                hub.InvokeAsync("EnterRoom", roomName, User.Id).Wait();
+            else
+                hub.InvokeAsync("EnterRoom", roomName, String.Empty).Wait();
+
 
             InitVideo();
 
@@ -377,7 +408,16 @@ Welcome to your new app.
     {
         if (hub is not null)
         {
-            hub.SendAsync("LeaveRoom", roomName);
+            RoomsParticipants[roomName].Remove(User);
+
+            if (RoomsParticipants[roomName].Count == 0)
+                SendVideoPause(RoomData.CurrentTime);
+
+            if (User is not null)
+                hub.SendAsync("LeaveRoom", roomName, User.Id);
+            else
+                hub.SendAsync("LeaveRoom", roomName, String.Empty);
+
             hub.StopAsync();
             hub = null;
         }
