@@ -38,4 +38,14 @@ public class VideoHub : Hub
     {
         await Clients.OthersInGroup(roomName).SendAsync("VideoChangedFromHub", videoUrl);
     }
+
+    public async Task VideoRemoved(string roomName, string videoUrl)
+    {
+        await Clients.OthersInGroup(roomName).SendAsync("VideoRemovedFromHub", videoUrl);
+    }
+
+    public async Task VideoUploaded(string roomName, string videoUrl)
+    {
+        await Clients.OthersInGroup(roomName).SendAsync("VideoUploadedFromHub", videoUrl);
+    }
 }

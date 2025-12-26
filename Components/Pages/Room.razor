@@ -159,7 +159,12 @@ Welcome to your new app.
 
         User = userManager.GetUserAsync(claims).Result;
 
-        LoadRoomData();
+        // Load room data
+        DbContext.ChangeTracker.Clear();
+        if (DbContext.Rooms.Find(roomName) is Data.Room room)
+        {
+            RoomData = room;
+        }
 
         base.OnInitialized();
     }
@@ -189,9 +194,23 @@ Welcome to your new app.
                 isActionReceivable = false;
                 JS.InvokeVoidAsync("SeekVideo", time);
             });
+            hub.On("VideoUploadedFromHub", (string url) =>
+            {
+                RoomData.VideoUrl = url;
+                RoomData.UploadedVideoUrls.Add(url);
+                InvokeAsync(StateHasChanged);
+            });
             hub.On("VideoChangedFromHub", (string url) =>
             {
-                LoadRoomData();
+                RoomData.VideoUrl = url;
+                InvokeAsync(StateHasChanged);
+            });
+            hub.On("VideoRemovedFromHub", (string url) =>
+            {
+                if (url == RoomData.VideoUrl)
+                    RoomData.VideoUrl = string.Empty;
+
+                RoomData.UploadedVideoUrls.Remove(url);
                 InvokeAsync(StateHasChanged);
             });
 
@@ -308,7 +327,7 @@ Welcome to your new app.
         DbContext.Rooms.Find(roomName)?.VideoUrl = RoomData.VideoUrl;
         DbContext.SaveChanges();
 
-        hub.SendAsync("VideoChanged", roomName, RoomData.VideoUrl);
+        hub.SendAsync("VideoUploaded", roomName, RoomData.VideoUrl);
 
         await Task.Delay(100);
 
@@ -331,16 +350,7 @@ Welcome to your new app.
         RoomData.UploadedVideoUrls.Remove(url);
         DbContext.SaveChanges();
 
-        hub.SendAsync("VideoChanged", roomName, RoomData.VideoUrl);
-    }
-
-    private void LoadRoomData()
-    {
-        DbContext.ChangeTracker.Clear();
-        if (DbContext.Rooms.Find(roomName) is Data.Room room)
-        {
-            RoomData = room;
-        }
+        hub.SendAsync("VideoRemoved", roomName, url);
     }
 
     private void RemoveRoom()
