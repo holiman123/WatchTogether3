@@ -7,6 +7,7 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @using System.Text.Json
 @using System.Security.Claims
+@using System.Text.Json.Serialization
 @using WatchTogether3.Data
 
 @inject IJSRuntime JS
@@ -43,16 +44,18 @@ else
 <br />
 <br/>
 
-@if (RoomData.CurrentVideo is not null)
-{
-    <video width="320" height="240" id="video_comp" src="@RoomData.CurrentVideo.Url"
-    onpause="OnPauseClick()"
-    onplay="OnProceedClick()"
-    onseeked="OnSeekClick()">
+
+<video width="320" height="240" id="video_comp"
+        onpause="OnPauseClick()"
+        onplay="OnProceedClick()"
+        onseeked="OnSeekClick()"
+        src="@RoomData.CurrentVideo?.Url">
+    @* @if (RoomData.CurrentVideo is not null)
+    {
         <source src="@RoomData.CurrentVideo.Url" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
-}
+    } *@
+    Your browser does not support the video tag.
+</video>
 <button id="play_btn" style="visibility: hidden" onclick="requestInitVideo()">Play</button>
 
 <hr>
@@ -90,6 +93,12 @@ else
     var dnh = null;
     function setDotnetReference(dotnetRef) {
         dnh = dotnetRef;
+    }
+
+    function clearVideo()
+    {
+        video.src = "";
+        video.load();
     }
 
     function initVideo(time, isPlay) {
@@ -196,7 +205,10 @@ else
             var lDotNetReference = DotNetObjectReference.Create(this);
             JS.InvokeVoidAsync("setDotnetReference", lDotNetReference);
 
-            hub = new HubConnectionBuilder().WithUrl(Navigation.ToAbsoluteUri("/videohub")).Build();
+            hub = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/videohub"))
+            .AddJsonProtocol(opt => opt.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)
+            .Build();
 
             hub.On("UserJoinedFromHub", (string userId) =>
             {
@@ -234,10 +246,14 @@ else
             });
             hub.On("VideoRemovedFromHub", (VideoFile video) =>
             {
-                if (video == RoomData.CurrentVideo)
-                    RoomData.CurrentVideo = null;
-
                 RoomData.UploadedVideos.Remove(video);
+
+                if (video == RoomData.CurrentVideo)
+                {
+                    RoomData.CurrentVideo = null;
+                    JS.InvokeVoidAsync("clearVideo");
+                }
+
                 InvokeAsync(StateHasChanged);
             });
 
@@ -335,8 +351,6 @@ else
 
     private async void LoadFile(InputFileChangeEventArgs e)
     {
-        //string fileName = $"{RoomData.Name}_{e.File.Name}";
-
         VideoFile videoFile = new VideoFile
         {
             Url = $"api/Videos/get/{roomName}_{e.File.Name}",
@@ -347,54 +361,53 @@ else
             UploadDate = DateTime.Now
         };
 
-        Stream fileData = e.File.OpenReadStream(long.MaxValue);
 
-        if (File.Exists(videoFile.Path))
+        if (!File.Exists(videoFile.Path))
         {
-            return;
-        }
+            Stream uploadedFileStream = e.File.OpenReadStream(long.MaxValue);
+            FileStream localFileStream = File.Create(videoFile.Path);
+            FileUploadCTS = new CancellationTokenSource();
 
-        FileStream fs = File.Create(videoFile.Path);
-        FileUploadCTS = new CancellationTokenSource();
-        Task.Run(async () =>
-        {
-            while (fileData.Position < fileData.Length && !FileUploadCTS.IsCancellationRequested)
+            Task.Run(async () =>
             {
-                progress = (double)fileData.Position / fileData.Length * 100;
-                InvokeAsync(StateHasChanged);
+                while (uploadedFileStream.Position < uploadedFileStream.Length && !FileUploadCTS.IsCancellationRequested)
+                {
+                    progress = (double)uploadedFileStream.Position / uploadedFileStream.Length * 100;
+                    InvokeAsync(StateHasChanged);
 
-                await Task.Delay(100);
+                    await Task.Delay(100);
+                }
+
+                progress = null;
+                InvokeAsync(StateHasChanged);
+            });
+
+            try
+            {
+                await uploadedFileStream.CopyToAsync(localFileStream, FileUploadCTS.Token);
+            }
+            catch (OperationCanceledException ex)
+            {
+                localFileStream.Dispose();
+                uploadedFileStream.Dispose();
+
+                File.Delete(videoFile.Path);
             }
 
-            progress = null;
-            InvokeAsync(StateHasChanged);
-        });
+            if (!FileUploadCTS.IsCancellationRequested)
+            {
+                localFileStream.Dispose();
+                uploadedFileStream.Dispose();
 
-        try
-        {
-            await fileData.CopyToAsync(fs, FileUploadCTS.Token);
-        }
-        catch (Exception ex)
-        {
-            fs.Dispose();
-            fileData.Dispose();
+                RoomData.CurrentVideo = videoFile;
+                RoomData.UploadedVideos.Add(videoFile);
+                DbContext.SaveChanges();
 
-            File.Delete(videoFile.Path);
-        }
+                await hub.InvokeAsync("VideoUploaded", roomName, videoFile);
 
-        if (!FileUploadCTS.IsCancellationRequested)
-        {
-            fs.Dispose();
-            fileData.Dispose();
+                await Task.Delay(100);
 
-            RoomData.CurrentVideo = videoFile;
-            RoomData.UploadedVideos.Add(videoFile);
-            DbContext.SaveChanges();
-
-            hub.SendAsync("VideoUploaded", roomName, videoFile);
-
-            await Task.Delay(100);
-
+            }
         }
 
         await InvokeAsync(StateHasChanged);
@@ -410,13 +423,17 @@ else
 
     private void RemoveVideo(VideoFile video)
     {
+        File.Delete(video.Path);
+        hub.SendAsync("VideoRemoved", roomName, video);
+
         if (video == RoomData.CurrentVideo)
+        {
             RoomData.CurrentVideo = null;
+            JS.InvokeVoidAsync("clearVideo");
+        }
 
         RoomData.UploadedVideos.Remove(video);
         DbContext.SaveChanges();
-
-        hub.SendAsync("VideoRemoved", roomName, video);
     }
 
     private void RemoveRoom()

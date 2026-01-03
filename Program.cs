@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 using WatchTogether3.Components;
 using WatchTogether3.Components.Account;
 using WatchTogether3.Data;
@@ -29,7 +30,8 @@ namespace WatchTogether3
                 })
                 .AddIdentityCookies();
 
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? 
+                throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -49,7 +51,11 @@ namespace WatchTogether3
 
             builder.Services.AddControllers();
 
-            builder.Services.AddSignalR();
+            builder.Services.AddSignalR()
+                .AddJsonProtocol(opt => 
+                {
+                    opt.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+                });
 
             var app = builder.Build();
 

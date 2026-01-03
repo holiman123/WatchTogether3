@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WatchTogether3.Data;
@@ -11,18 +12,22 @@ public class VideoFile
     public string FileName { get; set; } = string.Empty;
     public string Path { get; set; } = string.Empty;
     public DateTime UploadDate { get; set; }
-
-    //[ForeignKey("Room")]
-    //public string RoomName { get; set; } = string.Empty;
     public Room Room { get; set; }
 
-    //public VideoFile(string friendlyName, string fileName, Room room)
-    //{
-    //    FriendlyName = friendlyName;
-    //    FileName = fileName;
-    //    //Room = room;
-    //    Path = $"D:\\WatchTogether3_files\\{Room.Name}_{FileName}";
-    //    Url = $"api/Videos/get/{Room.Name}_{FileName}";
-    //    UploadDate = DateTime.Now;
-    //}
+
+    public override bool Equals(object? obj)
+    {
+        return obj is VideoFile file &&
+               Url == file.Url;
+    }
+
+    public static bool operator ==(VideoFile? left, VideoFile? right)
+    {
+        return EqualityComparer<VideoFile>.Default.Equals(left, right);
+    }
+
+    public static bool operator !=(VideoFile? left, VideoFile? right)
+    {
+        return !EqualityComparer<VideoFile>.Default.Equals(left, right);
+    }
 }

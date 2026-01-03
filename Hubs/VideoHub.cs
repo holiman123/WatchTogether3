@@ -37,18 +37,18 @@ public class VideoHub : Hub
         await Clients.OthersInGroup(roomName).SendAsync("SeekFromHub", time);
     }
 
-    public async Task VideoChanged(string roomName, string videoUrl)
+    public async Task VideoChanged(string roomName, VideoFile video)
     {
-        await Clients.OthersInGroup(roomName).SendAsync("VideoChangedFromHub", videoUrl);
+        await Clients.OthersInGroup(roomName).SendAsync("VideoChangedFromHub", video);
     }
 
-    public async Task VideoRemoved(string roomName, string videoUrl)
+    public async Task VideoRemoved(string roomName, VideoFile video)
     {
-        await Clients.OthersInGroup(roomName).SendAsync("VideoRemovedFromHub", videoUrl);
+        await Clients.OthersInGroup(roomName).SendAsync("VideoRemovedFromHub", video);
     }
 
-    public async Task VideoUploaded(string roomName, string videoUrl)
+    public async Task VideoUploaded(string roomName, VideoFile video)
     {
-        await Clients.OthersInGroup(roomName).SendAsync("VideoUploadedFromHub", videoUrl);
+        await Clients.OthersInGroup(roomName).SendAsync("VideoUploadedFromHub", video);
     }
 }
