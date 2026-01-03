@@ -18,16 +18,12 @@
         <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
+            <label for="username" class="form-label">Username:</label>
             <div class="form-floating mb-3">
-                <input type="text" value="@username" id="username" class="form-control" placeholder="Choose your username." disabled />
-                <label for="username" class="form-label">Username</label>
+                <InputText @bind-Value="Input.UserName" id="Input.UserName" class="form-control" placeholder="Enter username"/>
+                <ValidationMessage For="() => Input.UserName" class="text-danger" />
+                <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
             </div>
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.PhoneNumber" id="Input.PhoneNumber" class="form-control" placeholder="Enter your phone number" />
-                <label for="Input.PhoneNumber" class="form-label">Phone number</label>
-                <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
         </EditForm>
     </div>
 </div>
@@ -35,7 +31,6 @@
 @code {
     private ApplicationUser? user;
     private string? username;
-    private string? phoneNumber;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -55,9 +50,8 @@
         }
 
         username = await UserManager.GetUserNameAsync(user);
-        phoneNumber = await UserManager.GetPhoneNumberAsync(user);
 
-        Input.PhoneNumber ??= phoneNumber;
+        Input.UserName ??= username;
     }
 
     private async Task OnValidSubmitAsync()
@@ -68,12 +62,12 @@
             return;
         }
 
-        if (Input.PhoneNumber != phoneNumber)
+        if (Input.UserName != username)
         {
-            var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
-            if (!setPhoneResult.Succeeded)
+            var setUserNameResult = await UserManager.SetUserNameAsync(user, Input.UserName);
+            if (!setUserNameResult.Succeeded)
             {
-                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set phone number.", HttpContext);
+                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set username.", HttpContext);
                 return;
             }
         }
@@ -84,8 +78,7 @@
 
     private sealed class InputModel
     {
-        [Phone]
-        [Display(Name = "Phone number")]
-        public string? PhoneNumber { get; set; }
+        [Display(Name = "User name")]
+        public string? UserName { get; set; }
     }
 }
