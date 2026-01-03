@@ -12,8 +12,8 @@ using WatchTogether3.Data;
 namespace WatchTogether3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251221003616_mssql.local_migration_411")]
-    partial class mssqllocal_migration_411
+    [Migration("20260103002111_mssql.local_migration_948")]
+    partial class mssqllocal_migration_948
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -250,23 +250,63 @@ namespace WatchTogether3.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<DateTime>("CreationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("CurrentTime")
+                        .HasColumnType("float");
+
+                    b.Property<string>("CurrentVideoUrl")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsPlaying")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("LastPlayTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("OwnerId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.PrimitiveCollection<string>("UploadedVideoUrls")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("VideoUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Name");
+
+                    b.HasIndex("CurrentVideoUrl");
 
                     b.HasIndex("OwnerId");
 
                     b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("WatchTogether3.Data.VideoFile", b =>
+                {
+                    b.Property<string>("Url")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FriendlyName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RoomName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("UploadDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Url");
+
+                    b.HasIndex("RoomName");
+
+                    b.ToTable("Videos");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -371,18 +411,40 @@ namespace WatchTogether3.Migrations
 
             modelBuilder.Entity("WatchTogether3.Data.Room", b =>
                 {
+                    b.HasOne("WatchTogether3.Data.VideoFile", "CurrentVideo")
+                        .WithMany()
+                        .HasForeignKey("CurrentVideoUrl");
+
                     b.HasOne("WatchTogether3.Data.ApplicationUser", "Owner")
                         .WithMany("Rooms")
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("CurrentVideo");
+
                     b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("WatchTogether3.Data.VideoFile", b =>
+                {
+                    b.HasOne("WatchTogether3.Data.Room", "Room")
+                        .WithMany("UploadedVideos")
+                        .HasForeignKey("RoomName")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
                 });
 
             modelBuilder.Entity("WatchTogether3.Data.ApplicationUser", b =>
                 {
                     b.Navigation("Rooms");
+                });
+
+            modelBuilder.Entity("WatchTogether3.Data.Room", b =>
+                {
+                    b.Navigation("UploadedVideos");
                 });
 #pragma warning restore 612, 618
         }

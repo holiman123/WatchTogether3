@@ -7,6 +7,7 @@ namespace WatchTogether3.Data
         : IdentityDbContext<ApplicationUser>(options)
     {
         public DbSet<Room> Rooms { get; set; }
+        public DbSet<VideoFile> Videos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -17,8 +18,18 @@ namespace WatchTogether3.Data
                 .HasOne<ApplicationUser>(r => r.Owner)
                 .WithMany(u => u.Rooms);
 
+            //builder.Entity<Room>()
+            //    .HasOne<VideoFile>(r => r.CurrentVideo)
+            //    .WithOne(v => v.Room).HasForeignKey(nameof(Room), "CurrentVideoUrl");
+
+            builder.Entity<Room>()
+                .HasMany<VideoFile>(r => r.UploadedVideos)
+                .WithOne(v => v.Room);
+
 
             builder.Entity<Room>().Navigation(e => e.Owner).AutoInclude();
+
+            builder.Entity<Room>().Navigation(e => e.CurrentVideo).AutoInclude();
 
             base.OnModelCreating(builder);
         }

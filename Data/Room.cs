@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WatchTogether3.Data
 {
@@ -7,9 +8,9 @@ namespace WatchTogether3.Data
         [Key]
         public string Name { get; set; } = string.Empty;
 
-        public string VideoUrl { get; set; } = string.Empty;
+        public VideoFile? CurrentVideo { get; set; }
 
-        public List<string> UploadedVideoUrls { get; set; } = new List<string>();
+        public List<VideoFile> UploadedVideos { get; set; } = new List<VideoFile>();
 
         public ApplicationUser Owner { get; set; }
 

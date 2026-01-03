@@ -1,4 +1,17 @@
-﻿@inherits LayoutComponentBase
+﻿@using System.Security.Claims
+@inherits LayoutComponentBase
+
+@inject AuthenticationStateProvider auth
+
+<NavLink href="/">Home</NavLink>
+
+<NavLink href="/Account/Manage">Account</NavLink>
+
+<AuthorizeView>
+    <Authorized>
+        You logged in as @User.Identity.Name
+    </Authorized>
+</AuthorizeView>
 
 @Body
 
@@ -7,3 +20,14 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code
+                {
+    private ClaimsPrincipal User;
+
+    protected override async void OnInitialized()
+    {
+        var state = await auth.GetAuthenticationStateAsync();
+        User = state.User;
+    }
+}

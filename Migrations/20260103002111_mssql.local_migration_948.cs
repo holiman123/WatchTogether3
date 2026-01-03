@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WatchTogether3.Migrations
 {
     /// <inheritdoc />
-    public partial class mssqllocal_migration_492 : Migration
+    public partial class mssqllocal_migration_948 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -180,8 +180,12 @@ namespace WatchTogether3.Migrations
                 columns: table => new
                 {
                     Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    VideoUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    OwnerId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    CurrentVideoUrl = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    OwnerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    IsPlaying = table.Column<bool>(type: "bit", nullable: false),
+                    CurrentTime = table.Column<double>(type: "float", nullable: false),
+                    LastPlayTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -190,7 +194,30 @@ namespace WatchTogether3.Migrations
                         name: "FK_Rooms_AspNetUsers_OwnerId",
                         column: x => x.OwnerId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Videos",
+                columns: table => new
+                {
+                    Url = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    FriendlyName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FileName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Path = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UploadDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RoomName = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Videos", x => x.Url);
+                    table.ForeignKey(
+                        name: "FK_Videos_Rooms_RoomName",
+                        column: x => x.RoomName,
+                        principalTable: "Rooms",
+                        principalColumn: "Name",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -238,14 +265,39 @@ namespace WatchTogether3.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Rooms_CurrentVideoUrl",
+                table: "Rooms",
+                column: "CurrentVideoUrl");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Rooms_OwnerId",
                 table: "Rooms",
                 column: "OwnerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Videos_RoomName",
+                table: "Videos",
+                column: "RoomName");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Rooms_Videos_CurrentVideoUrl",
+                table: "Rooms",
+                column: "CurrentVideoUrl",
+                principalTable: "Videos",
+                principalColumn: "Url");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_Rooms_AspNetUsers_OwnerId",
+                table: "Rooms");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Rooms_Videos_CurrentVideoUrl",
+                table: "Rooms");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
@@ -265,13 +317,16 @@ namespace WatchTogether3.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Rooms");
-
-            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Videos");
+
+            migrationBuilder.DropTable(
+                name: "Rooms");
         }
     }
 }

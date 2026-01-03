@@ -16,41 +16,43 @@
 @inject UserManager<ApplicationUser> userManager
 @inject RoomsParticipantsService RoomsParticipants
 
-<AuthorizeView>
-    <p>Logged in as @User.UserName</p>
-</AuthorizeView>
-
-<PageTitle>Home</PageTitle>
+<PageTitle>Room @roomName</PageTitle>
 
 <h1>@RoomData.Owner?.UserName 's room</h1>
 
-Welcome to your new app.
-
 <hr>
 
-<InputFile OnChange="LoadFile" />
-<InputText @bind-value="RoomData.VideoUrl" />
+<InputFile id="fileUpload" OnChange="LoadFile" style="display:none" />
 
-<p>progress: @progress</p>
-
-@foreach(string video in RoomData.UploadedVideoUrls)
+@foreach(VideoFile video in RoomData.UploadedVideos)
 {
-    <button @onclick="() => ChangeVideo(video)">@video</button>
+    <button @onclick="() => ChangeVideo(video)">@video.FriendlyName</button>
     <button @onclick="() => RemoveVideo(video)">X</button>
     <br />
+}
+@if (progress is null)
+{
+    <label for="fileUpload">+</label>
+}
+else
+{
+    <label>Uploading: @progress.Value.ToString("0.00")%</label>
+    <button @onclick="() => FileUploadCTS.Cancel()">X</button>
 }
 
 <br />
 <br/>
 
-
-<video width="320" height="240" id="video_comp" src="@RoomData.VideoUrl"
+@if (RoomData.CurrentVideo is not null)
+{
+    <video width="320" height="240" id="video_comp" src="@RoomData.CurrentVideo.Url"
     onpause="OnPauseClick()"
     onplay="OnProceedClick()"
     onseeked="OnSeekClick()">
-    <source src="@RoomData.VideoUrl" type="video/mp4">
-    Your browser does not support the video tag.
-</video>
+        <source src="@RoomData.CurrentVideo.Url" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+}
 <button id="play_btn" style="visibility: hidden" onclick="requestInitVideo()">Play</button>
 
 <hr>
@@ -59,8 +61,6 @@ Welcome to your new app.
 {
     <button @onclick="RemoveRoom">Remove room</button>
 }
-
-<hr />
 
 @if (RoomsParticipants.ContainsKey(roomName))
 {
@@ -157,7 +157,7 @@ Welcome to your new app.
 @code {
     //private string fileUrl { get; set; }
 
-    private double progress;
+    private double? progress;
 
     private HubConnection hub;
 
@@ -169,6 +169,8 @@ Welcome to your new app.
     private ApplicationUser? User { get; set; }
 
     private Data.Room RoomData { get; set; }
+
+    private CancellationTokenSource FileUploadCTS { get; set; }
 
 
     protected override void OnInitialized()
@@ -219,23 +221,23 @@ Welcome to your new app.
                 isActionReceivable = false;
                 JS.InvokeVoidAsync("SeekVideo", time);
             });
-            hub.On("VideoUploadedFromHub", (string url) =>
+            hub.On("VideoUploadedFromHub", (VideoFile video) =>
             {
-                RoomData.VideoUrl = url;
-                RoomData.UploadedVideoUrls.Add(url);
+                RoomData.CurrentVideo = video;
+                RoomData.UploadedVideos.Add(video);
                 InvokeAsync(StateHasChanged);
             });
-            hub.On("VideoChangedFromHub", (string url) =>
+            hub.On("VideoChangedFromHub", (VideoFile video) =>
             {
-                RoomData.VideoUrl = url;
+                RoomData.CurrentVideo = video;
                 InvokeAsync(StateHasChanged);
             });
-            hub.On("VideoRemovedFromHub", (string url) =>
+            hub.On("VideoRemovedFromHub", (VideoFile video) =>
             {
-                if (url == RoomData.VideoUrl)
-                    RoomData.VideoUrl = string.Empty;
+                if (video == RoomData.CurrentVideo)
+                    RoomData.CurrentVideo = null;
 
-                RoomData.UploadedVideoUrls.Remove(url);
+                RoomData.UploadedVideos.Remove(video);
                 InvokeAsync(StateHasChanged);
             });
 
@@ -333,55 +335,88 @@ Welcome to your new app.
 
     private async void LoadFile(InputFileChangeEventArgs e)
     {
+        //string fileName = $"{RoomData.Name}_{e.File.Name}";
+
+        VideoFile videoFile = new VideoFile
+        {
+            Url = $"api/Videos/get/{roomName}_{e.File.Name}",
+            FriendlyName = e.File.Name,
+            FileName = e.File.Name,
+            Path = Path.Combine("D:\\WatchTogether3_files\\", $"{roomName}_{e.File.Name}"),
+            Room = RoomData,
+            UploadDate = DateTime.Now
+        };
+
         Stream fileData = e.File.OpenReadStream(long.MaxValue);
 
-        FileStream fs = File.Create($"D:\\WatchTogether3_files\\{e.File.Name}");
+        if (File.Exists(videoFile.Path))
+        {
+            return;
+        }
+
+        FileStream fs = File.Create(videoFile.Path);
+        FileUploadCTS = new CancellationTokenSource();
         Task.Run(async () =>
         {
-            while (fileData.Position < fileData.Length)
+            while (fileData.Position < fileData.Length && !FileUploadCTS.IsCancellationRequested)
             {
                 progress = (double)fileData.Position / fileData.Length * 100;
                 InvokeAsync(StateHasChanged);
 
                 await Task.Delay(100);
             }
+
+            progress = null;
+            InvokeAsync(StateHasChanged);
         });
 
-        await fileData.CopyToAsync(fs);
+        try
+        {
+            await fileData.CopyToAsync(fs, FileUploadCTS.Token);
+        }
+        catch (Exception ex)
+        {
+            fs.Dispose();
+            fileData.Dispose();
 
-        fs.Close();
-        fileData.Close();
+            File.Delete(videoFile.Path);
+        }
 
-        RoomData.VideoUrl = "api/Videos/get/" + e.File.Name;
-        RoomData.UploadedVideoUrls.Add(RoomData.VideoUrl);
-        //File.WriteAllText("CurrentVideoUrl.txt", fileUrl);
-        DbContext.Rooms.Find(roomName)?.VideoUrl = RoomData.VideoUrl;
-        DbContext.SaveChanges();
+        if (!FileUploadCTS.IsCancellationRequested)
+        {
+            fs.Dispose();
+            fileData.Dispose();
 
-        hub.SendAsync("VideoUploaded", roomName, RoomData.VideoUrl);
+            RoomData.CurrentVideo = videoFile;
+            RoomData.UploadedVideos.Add(videoFile);
+            DbContext.SaveChanges();
 
-        await Task.Delay(100);
+            hub.SendAsync("VideoUploaded", roomName, videoFile);
+
+            await Task.Delay(100);
+
+        }
 
         await InvokeAsync(StateHasChanged);
     }
 
-    private void ChangeVideo(string url)
+    private void ChangeVideo(VideoFile video)
     {
-        RoomData.VideoUrl = url;
+        RoomData.CurrentVideo = video;
         DbContext.SaveChanges();
 
-        hub.SendAsync("VideoChanged", roomName, RoomData.VideoUrl);
+        hub.SendAsync("VideoChanged", roomName, RoomData.CurrentVideo);
     }
 
-    private void RemoveVideo(string url)
+    private void RemoveVideo(VideoFile video)
     {
-        if (url == RoomData.VideoUrl)
-            RoomData.VideoUrl = string.Empty;
+        if (video == RoomData.CurrentVideo)
+            RoomData.CurrentVideo = null;
 
-        RoomData.UploadedVideoUrls.Remove(url);
+        RoomData.UploadedVideos.Remove(video);
         DbContext.SaveChanges();
 
-        hub.SendAsync("VideoRemoved", roomName, url);
+        hub.SendAsync("VideoRemoved", roomName, video);
     }
 
     private void RemoveRoom()
@@ -392,9 +427,9 @@ Welcome to your new app.
             DbContext.Rooms.Remove(room);
             DbContext.SaveChanges();
 
-            foreach(string videoUrl in room.UploadedVideoUrls)
+            foreach(VideoFile video in room.UploadedVideos)
             {
-                var filePath = Path.Combine("D:\\WatchTogether3_files\\", Path.GetFileName(videoUrl));
+                var filePath = Path.Combine("D:\\WatchTogether3_files\\", video.FileName);
                 if (File.Exists(filePath))
                 {
                     File.Delete(filePath);

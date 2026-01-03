@@ -15,11 +15,7 @@
 
 <AuthorizeView>
     <Authorized>
-        <p>You logged in as @User.Identity.Name</p>
-        <NavLink href="Account/Manage">Manage</NavLink>
-        <hr/>
-
-        <p>Create room form:</p>
+        <p>Create room:</p>
         <form>
             <label for="roomName">Room Name:</label>
             <input type="text" id="roomName" name="roomName" @bind="roomName" />
@@ -32,11 +28,15 @@
     </NotAuthorized>
 </AuthorizeView>
 
+<br />
+<hr />
 @foreach (Data.Room room in DbContext.Rooms)
 {
-    <br/>
     <p>@room.Name</p>
+    <p>by @room.Owner.UserName</p>
+    <p>watching @room.CurrentVideo</p>
     <button @onclick="() => GoToRoom(room.Name)">Join Room</button>
+    <hr />
 }
 
 <script>
