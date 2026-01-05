@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
@@ -86,7 +87,11 @@ namespace WatchTogether3
             
             app.MapControllers();
 
-            app.MapHub<VideoHub>("/videohub");
+            app.MapHub<VideoHub>("/videohub", (opt) => 
+            { 
+                opt.Transports = HttpTransportType.WebSockets;
+                
+            });
 
             app.Run();
         }

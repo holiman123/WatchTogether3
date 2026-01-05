@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @implements IDisposable
 
+@using Microsoft.AspNetCore.Http.Connections
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.SignalR
 @using Microsoft.AspNetCore.SignalR.Client
@@ -205,8 +206,15 @@ else
             var lDotNetReference = DotNetObjectReference.Create(this);
             JS.InvokeVoidAsync("setDotnetReference", lDotNetReference);
 
-            hub = new HubConnectionBuilder()
-            .WithUrl(Navigation.ToAbsoluteUri("/videohub"))
+            string hubUri = Navigation.ToAbsoluteUri("/videohub").AbsoluteUri;
+            HubConnectionBuilder hubBuilder = new HubConnectionBuilder();
+            #if DEBUG
+            hubBuilder.ConfigureLogging(opt => opt.SetMinimumLevel(LogLevel.Trace).AddConsole());
+            #endif
+            hubBuilder.WithUrl(hubUri, HttpTransportType.WebSockets, (httpOpt) =>
+            {
+                httpOpt.SkipNegotiation = true;
+            })
             .AddJsonProtocol(opt => opt.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)
             .Build();
 
