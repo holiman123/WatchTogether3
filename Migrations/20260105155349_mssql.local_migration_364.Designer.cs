@@ -12,8 +12,8 @@ using WatchTogether3.Data;
 namespace WatchTogether3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260103002111_mssql.local_migration_948")]
-    partial class mssqllocal_migration_948
+    [Migration("20260105155349_mssql.local_migration_364")]
+    partial class mssqllocal_migration_364
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -247,8 +247,11 @@ namespace WatchTogether3.Migrations
 
             modelBuilder.Entity("WatchTogether3.Data.Room", b =>
                 {
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("datetime2");
@@ -265,11 +268,15 @@ namespace WatchTogether3.Migrations
                     b.Property<DateTime>("LastPlayTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("OwnerId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Name");
+                    b.HasKey("Id");
 
                     b.HasIndex("CurrentVideoUrl");
 
@@ -295,16 +302,15 @@ namespace WatchTogether3.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("RoomName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("UploadDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Url");
 
-                    b.HasIndex("RoomName");
+                    b.HasIndex("RoomId");
 
                     b.ToTable("Videos");
                 });
@@ -430,7 +436,7 @@ namespace WatchTogether3.Migrations
                 {
                     b.HasOne("WatchTogether3.Data.Room", "Room")
                         .WithMany("UploadedVideos")
-                        .HasForeignKey("RoomName")
+                        .HasForeignKey("RoomId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

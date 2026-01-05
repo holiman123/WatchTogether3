@@ -12,7 +12,7 @@ namespace WatchTogether3.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             builder.Entity<Room>()
-                .HasKey(r => r.Name);
+                .HasKey(r => r.Id);
 
             builder.Entity<Room>()
                 .HasOne<ApplicationUser>(r => r.Owner)

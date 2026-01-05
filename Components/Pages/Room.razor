@@ -1,4 +1,4 @@
-﻿@page "/Room/{roomName}"
+﻿@page "/Room/{roomId:int}"
 @rendermode InteractiveServer
 @implements IDisposable
 
@@ -18,7 +18,7 @@
 @inject UserManager<ApplicationUser> userManager
 @inject RoomsParticipantsService RoomsParticipants
 
-<PageTitle>Room @roomName</PageTitle>
+<PageTitle>Room @RoomData.Name</PageTitle>
 
 <h1>@RoomData.Owner?.UserName 's room</h1>
 
@@ -61,14 +61,14 @@ else
 
 <hr>
 
-@if (User == RoomData.Owner)
+@if (User.Id == RoomData.Owner.Id)
 {
     <button @onclick="RemoveRoom">Remove room</button>
 }
 
-@if (RoomsParticipants.ContainsKey(roomName))
+@if (RoomsParticipants.ContainsKey(roomId))
 {
-    foreach (ApplicationUser participant in RoomsParticipants[roomName])
+    foreach (ApplicationUser participant in RoomsParticipants[roomId])
     {
         if (participant is not null)
         {
@@ -165,7 +165,6 @@ else
 </script>
 
 @code {
-    //private string fileUrl { get; set; }
 
     private double? progress;
 
@@ -174,7 +173,7 @@ else
     private bool isActionReceivable = true;
 
     [Parameter]
-    public string roomName { get; set; }
+    public int roomId { get; set; }
 
     private ApplicationUser? User { get; set; }
 
@@ -191,7 +190,7 @@ else
 
         // Load room data
         DbContext.ChangeTracker.Clear();
-        if (DbContext.Rooms.Find(roomName) is Data.Room room)
+        if (DbContext.Rooms.Find(roomId) is Data.Room room)
         {
             RoomData = room;
         }
@@ -211,7 +210,7 @@ else
             #if DEBUG
             hubBuilder.ConfigureLogging(opt => opt.SetMinimumLevel(LogLevel.Trace).AddConsole());
             #endif
-            hubBuilder.WithUrl(hubUri, HttpTransportType.WebSockets, (httpOpt) =>
+            hub = hubBuilder.WithUrl(hubUri, HttpTransportType.WebSockets, (httpOpt) =>
             {
                 httpOpt.SkipNegotiation = true;
             })
@@ -268,12 +267,12 @@ else
             hub.StartAsync().Wait();
 
             // Enter room
-            RoomsParticipants.AddRoomParticipant(roomName, User);
+            RoomsParticipants.AddRoomParticipant(roomId, User);
 
             if (User is not null)
-                hub.InvokeAsync("EnterRoom", roomName, User.Id).Wait();
+                hub.InvokeAsync("EnterRoom", roomId, User.Id).Wait();
             else
-                hub.InvokeAsync("EnterRoom", roomName, String.Empty).Wait();
+                hub.InvokeAsync("EnterRoom", roomId, String.Empty).Wait();
 
 
             InitVideo();
@@ -325,7 +324,7 @@ else
         if (hub is null)
             return;
 
-        hub.SendAsync("Paused", roomName, time);
+        hub.SendAsync("Paused", roomId, time);
 
         RoomData.CurrentTime = time;
         RoomData.IsPlaying = false;
@@ -336,7 +335,7 @@ else
         if (hub is null)
             return;
 
-        hub.SendAsync("Proceeded", roomName);
+        hub.SendAsync("Proceeded", roomId);
 
         RoomData.LastPlayTime = DateTime.Now;
         RoomData.IsPlaying = true;
@@ -347,7 +346,7 @@ else
         if (hub is null)
             return;
 
-        hub.SendAsync("Seeked", roomName, time);
+        hub.SendAsync("Seeked", roomId, time);
 
         if (RoomData.IsPlaying)
         {
@@ -361,10 +360,10 @@ else
     {
         VideoFile videoFile = new VideoFile
         {
-            Url = $"api/Videos/get/{roomName}_{e.File.Name}",
+            Url = $"api/Videos/get/{roomId}_{e.File.Name}",
             FriendlyName = e.File.Name,
             FileName = e.File.Name,
-            Path = Path.Combine("D:\\WatchTogether3_files\\", $"{roomName}_{e.File.Name}"),
+            Path = Path.Combine("D:\\WatchTogether3_files\\", $"{roomId}_{e.File.Name}"),
             Room = RoomData,
             UploadDate = DateTime.Now
         };
@@ -411,7 +410,7 @@ else
                 RoomData.UploadedVideos.Add(videoFile);
                 DbContext.SaveChanges();
 
-                await hub.InvokeAsync("VideoUploaded", roomName, videoFile);
+                await hub.InvokeAsync("VideoUploaded", roomId, videoFile);
 
                 await Task.Delay(100);
 
@@ -426,13 +425,13 @@ else
         RoomData.CurrentVideo = video;
         DbContext.SaveChanges();
 
-        hub.SendAsync("VideoChanged", roomName, RoomData.CurrentVideo);
+        hub.SendAsync("VideoChanged", roomId, RoomData.CurrentVideo);
     }
 
     private void RemoveVideo(VideoFile video)
     {
         File.Delete(video.Path);
-        hub.SendAsync("VideoRemoved", roomName, video);
+        hub.SendAsync("VideoRemoved", roomId, video);
 
         if (video == RoomData.CurrentVideo)
         {
@@ -446,7 +445,7 @@ else
 
     private void RemoveRoom()
     {
-        var room = DbContext.Rooms.Find(roomName);
+        var room = DbContext.Rooms.Find(roomId);
         if (room is not null)
         {
             DbContext.Rooms.Remove(room);
@@ -468,15 +467,15 @@ else
     {
         if (hub is not null)
         {
-            RoomsParticipants[roomName].Remove(User);
+            RoomsParticipants[roomId].Remove(User);
 
-            if (RoomsParticipants[roomName].Count == 0)
+            if (RoomsParticipants[roomId].Count == 0)
                 SendVideoPause(RoomData.CurrentTime);
 
             if (User is not null)
-                hub.SendAsync("LeaveRoom", roomName, User.Id);
+                hub.SendAsync("LeaveRoom", roomId, User.Id);
             else
-                hub.SendAsync("LeaveRoom", roomName, String.Empty);
+                hub.SendAsync("LeaveRoom", roomId, String.Empty);
 
             hub.StopAsync();
             hub = null;

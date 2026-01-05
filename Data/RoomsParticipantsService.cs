@@ -1,14 +1,14 @@
 ﻿namespace WatchTogether3.Data;
 
-public class RoomsParticipantsService : Dictionary<string, List<ApplicationUser?>>
+public class RoomsParticipantsService : Dictionary<int, List<ApplicationUser?>>
 {
-    public void AddRoomParticipant(string roomName, ApplicationUser? user)
+    public void AddRoomParticipant(int roomId, ApplicationUser? user)
     {
-        if (!this.ContainsKey(roomName))
+        if (!this.ContainsKey(roomId))
         {
-            this[roomName] = new List<ApplicationUser?>();
+            this[roomId] = new List<ApplicationUser?>();
         }
 
-        this[roomName].Add(user);
+        this[roomId].Add(user);
     }
 }

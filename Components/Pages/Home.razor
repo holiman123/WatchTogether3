@@ -35,7 +35,7 @@
     <p>@room.Name</p>
     <p>by @room.Owner.UserName</p>
     <p>watching @room.CurrentVideo</p>
-    <button @onclick="() => GoToRoom(room.Name)">Join Room</button>
+    <button @onclick="() => GoToRoom(room.Id)">Join Room</button>
     <hr />
 }
 
@@ -80,14 +80,11 @@
 
         DbContext.SaveChanges();
 
-        if (!string.IsNullOrWhiteSpace(roomName))
-        {
-            Navigation.NavigateTo($"/Room/{roomName}");
-        }
+        GoToRoom(newRoom.Id);
     }
 
-    private void GoToRoom(string name)
+    private void GoToRoom(int id)
     {
-        Navigation.NavigateTo($"/Room/{name}");
+        Navigation.NavigateTo($"/Room/{id}");
     }
 }
