@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WatchTogether3.Migrations
 {
     /// <inheritdoc />
-    public partial class mssqllocal_migration_364 : Migration
+    public partial class mssqllocal_migration_760 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -182,7 +182,7 @@ namespace WatchTogether3.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CurrentVideoUrl = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    CurrentVideoId = table.Column<int>(type: "int", nullable: true),
                     OwnerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     IsPlaying = table.Column<bool>(type: "bit", nullable: false),
                     CurrentTime = table.Column<double>(type: "float", nullable: false),
@@ -204,7 +204,9 @@ namespace WatchTogether3.Migrations
                 name: "Videos",
                 columns: table => new
                 {
-                    Url = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Url = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FriendlyName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FileName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Path = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -213,7 +215,7 @@ namespace WatchTogether3.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Videos", x => x.Url);
+                    table.PrimaryKey("PK_Videos", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Videos_Rooms_RoomId",
                         column: x => x.RoomId,
@@ -267,9 +269,9 @@ namespace WatchTogether3.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Rooms_CurrentVideoUrl",
+                name: "IX_Rooms_CurrentVideoId",
                 table: "Rooms",
-                column: "CurrentVideoUrl");
+                column: "CurrentVideoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Rooms_OwnerId",
@@ -282,11 +284,11 @@ namespace WatchTogether3.Migrations
                 column: "RoomId");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_Rooms_Videos_CurrentVideoUrl",
+                name: "FK_Rooms_Videos_CurrentVideoId",
                 table: "Rooms",
-                column: "CurrentVideoUrl",
+                column: "CurrentVideoId",
                 principalTable: "Videos",
-                principalColumn: "Url");
+                principalColumn: "Id");
         }
 
         /// <inheritdoc />
@@ -297,7 +299,7 @@ namespace WatchTogether3.Migrations
                 table: "Rooms");
 
             migrationBuilder.DropForeignKey(
-                name: "FK_Rooms_Videos_CurrentVideoUrl",
+                name: "FK_Rooms_Videos_CurrentVideoId",
                 table: "Rooms");
 
             migrationBuilder.DropTable(

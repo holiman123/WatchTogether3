@@ -225,6 +225,10 @@ else
             {
                 InvokeAsync(StateHasChanged);
             });
+            hub.On("RoomRemovedFromHub", () =>
+            {
+                Navigation.NavigateTo("/");
+            });
             hub.On("PauseFromHub", (double time) =>
             {
                 isActionReceivable = false;
@@ -430,36 +434,42 @@ else
 
     private void RemoveVideo(VideoFile video)
     {
-        File.Delete(video.Path);
-        hub.SendAsync("VideoRemoved", roomId, video);
-
         if (video == RoomData.CurrentVideo)
         {
             RoomData.CurrentVideo = null;
             JS.InvokeVoidAsync("clearVideo");
         }
 
+        DbContext.Videos.Remove(video);
         RoomData.UploadedVideos.Remove(video);
-        DbContext.SaveChanges();
+        if (DbContext.SaveChanges() != 0) //Somewhere near this place(when deleting video) it says that instance of RoomData already exists so it cannot update SQL database.
+        {
+            File.Delete(video.Path);
+            hub.SendAsync("VideoRemoved", roomId, video);
+        }
     }
 
     private void RemoveRoom()
     {
-        var room = DbContext.Rooms.Find(roomId);
-        if (room is not null)
+        foreach (VideoFile video in RoomData.UploadedVideos)
         {
-            DbContext.Rooms.Remove(room);
-            DbContext.SaveChanges();
-
-            foreach(VideoFile video in room.UploadedVideos)
+            DbContext.Videos.Remove(video);
+            if (File.Exists(video.Path))
             {
-                var filePath = Path.Combine("D:\\WatchTogether3_files\\", video.FileName);
-                if (File.Exists(filePath))
-                {
-                    File.Delete(filePath);
-                }
+                File.Delete(video.Path);
             }
         }
+        DbContext.SaveChanges();
+
+        RoomData.UploadedVideos.Clear();
+
+        DbContext.Rooms.Remove(RoomData);
+        DbContext.SaveChanges();
+
+        RoomsParticipants.Remove(roomId);
+
+        hub.SendAsync("RoomRemoved", roomId);
+
         Navigation.NavigateTo("/");
     }
 
@@ -467,10 +477,13 @@ else
     {
         if (hub is not null)
         {
-            RoomsParticipants[roomId].Remove(User);
+            if (RoomsParticipants.TryGetValue(roomId, out List<ApplicationUser?> users))
+            {
+                users.Remove(User);
 
-            if (RoomsParticipants[roomId].Count == 0)
-                SendVideoPause(RoomData.CurrentTime);
+                if (users.Count == 0)
+                    SendVideoPause(RoomData.CurrentTime);
+            }
 
             if (User is not null)
                 hub.SendAsync("LeaveRoom", roomId, User.Id);

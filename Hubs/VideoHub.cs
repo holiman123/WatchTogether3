@@ -22,6 +22,11 @@ public class VideoHub : Hub
         await Clients.OthersInGroup($"room:{roomId}").SendAsync("UserLeftFromHub", userId);
     }
 
+    public async Task RoomRemoved(int roomId)
+    {
+        await Clients.OthersInGroup($"room:{roomId}").SendAsync("RoomRemovedFromHub");
+    }
+
     public async Task Paused(int roomId, double time)
     {
         await Clients.OthersInGroup($"room:{roomId}").SendAsync("PauseFromHub", time);

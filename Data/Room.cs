@@ -7,17 +7,11 @@ namespace WatchTogether3.Data
     {
         [Key]
         public int Id { get; set; }
-
         public string Name { get; set; } = string.Empty;
-
         public VideoFile? CurrentVideo { get; set; }
-
         public List<VideoFile> UploadedVideos { get; set; } = new List<VideoFile>();
-
         public ApplicationUser Owner { get; set; }
-
         public bool IsPlaying { get; set; }
-
         public double CurrentTime
         {
             get
@@ -43,5 +37,21 @@ namespace WatchTogether3.Data
         public DateTime LastPlayTime { get; set; }
 
         public DateTime CreationDate { get; set; }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Room room &&
+                   Id == room.Id;
+        }
+
+        public static bool operator ==(Room? left, Room? right)
+        {
+            return EqualityComparer<Room>.Default.Equals(left, right);
+        }
+
+        public static bool operator !=(Room? left, Room? right)
+        {
+            return !(left == right);
+        }
     }
 }

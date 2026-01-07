@@ -256,8 +256,8 @@ namespace WatchTogether3.Migrations
                     b.Property<double>("CurrentTime")
                         .HasColumnType("float");
 
-                    b.Property<string>("CurrentVideoUrl")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int?>("CurrentVideoId")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsPlaying")
                         .HasColumnType("bit");
@@ -275,7 +275,7 @@ namespace WatchTogether3.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CurrentVideoUrl");
+                    b.HasIndex("CurrentVideoId");
 
                     b.HasIndex("OwnerId");
 
@@ -284,8 +284,11 @@ namespace WatchTogether3.Migrations
 
             modelBuilder.Entity("WatchTogether3.Data.VideoFile", b =>
                 {
-                    b.Property<string>("Url")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("FileName")
                         .IsRequired()
@@ -305,7 +308,11 @@ namespace WatchTogether3.Migrations
                     b.Property<DateTime>("UploadDate")
                         .HasColumnType("datetime2");
 
-                    b.HasKey("Url");
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("RoomId");
 
@@ -416,7 +423,7 @@ namespace WatchTogether3.Migrations
                 {
                     b.HasOne("WatchTogether3.Data.VideoFile", "CurrentVideo")
                         .WithMany()
-                        .HasForeignKey("CurrentVideoUrl");
+                        .HasForeignKey("CurrentVideoId");
 
                     b.HasOne("WatchTogether3.Data.ApplicationUser", "Owner")
                         .WithMany("Rooms")

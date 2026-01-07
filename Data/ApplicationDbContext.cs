@@ -24,12 +24,14 @@ namespace WatchTogether3.Data
 
             builder.Entity<Room>()
                 .HasMany<VideoFile>(r => r.UploadedVideos)
-                .WithOne(v => v.Room);
+                .WithOne(v => v.Room).OnDelete(DeleteBehavior.NoAction);
 
 
             builder.Entity<Room>().Navigation(e => e.Owner).AutoInclude();
 
             builder.Entity<Room>().Navigation(e => e.CurrentVideo).AutoInclude();
+
+            builder.Entity<Room>().Navigation(e => e.UploadedVideos).AutoInclude();
 
             base.OnModelCreating(builder);
         }
