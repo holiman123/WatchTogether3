@@ -47,6 +47,11 @@ public class VideoHub : Hub
         await Clients.OthersInGroup($"room:{roomId}").SendAsync("VideoChangedFromHub", video);
     }
 
+    public async Task VideoRenamed(int roomId, VideoFile video)
+    {
+        await Clients.OthersInGroup($"room:{roomId}").SendAsync("VideoRenamedFromHub", video);
+    }
+
     public async Task VideoRemoved(int roomId, VideoFile video)
     {
         await Clients.OthersInGroup($"room:{roomId}").SendAsync("VideoRemovedFromHub", video);

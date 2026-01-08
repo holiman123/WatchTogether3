@@ -29,6 +29,8 @@
 @foreach(VideoFile video in RoomData.UploadedVideos)
 {
     <button @onclick="() => ChangeVideo(video)">@video.FriendlyName</button>
+    <textarea @bind="tempNewVideoName" />
+    <button @onclick="() => RenameVideo(video, tempNewVideoName)">Rename</button>
     <button @onclick="() => RemoveVideo(video)">X</button>
     <br />
 }
@@ -181,6 +183,8 @@ else
 
     private CancellationTokenSource FileUploadCTS { get; set; }
 
+    private string tempNewVideoName { get; set; } = string.Empty;
+
 
     protected override void OnInitialized()
     {
@@ -245,12 +249,24 @@ else
             {
                 RoomData.CurrentVideo = video;
                 RoomData.UploadedVideos.Add(video);
+
                 DbContext.ChangeTracker.Clear();
                 InvokeAsync(StateHasChanged);
             });
             hub.On("VideoChangedFromHub", (VideoFile video) =>
             {
                 RoomData.CurrentVideo = video;
+
+                DbContext.ChangeTracker.Clear();
+                InvokeAsync(StateHasChanged);
+            });
+            hub.On("VideoRenamedFromHub", (VideoFile video) =>
+            {
+                var localVideo = RoomData.UploadedVideos.FirstOrDefault(v => v.Id == video.Id);
+                if (localVideo is not null)
+                {
+                    localVideo.FriendlyName = video.FriendlyName;
+                }
                 DbContext.ChangeTracker.Clear();
                 InvokeAsync(StateHasChanged);
             });
@@ -264,6 +280,7 @@ else
                     JS.InvokeVoidAsync("clearVideo");
                 }
 
+                DbContext.ChangeTracker.Clear();
                 InvokeAsync(StateHasChanged);
             });
 
@@ -429,6 +446,14 @@ else
         DbContext.SaveChanges();
 
         hub.SendAsync("VideoChanged", roomId, RoomData.CurrentVideo);
+    }
+
+    private void RenameVideo(VideoFile video, string newName)
+    {
+        video.FriendlyName = newName;
+        DbContext.SaveChanges();
+
+        hub.SendAsync("VideoRenamed", roomId, video);
     }
 
     private void RemoveVideo(VideoFile video)
