@@ -61,7 +61,7 @@ else
 
 <hr>
 
-@if (User.Id == RoomData.Owner.Id)
+@if (User is not null && User.Id == RoomData.Owner.Id)
 {
     <button @onclick="RemoveRoom">Remove room</button>
 }
@@ -210,10 +210,7 @@ else
             #if DEBUG
             hubBuilder.ConfigureLogging(opt => opt.SetMinimumLevel(LogLevel.Trace).AddConsole());
             #endif
-            hub = hubBuilder.WithUrl(hubUri, HttpTransportType.WebSockets, (httpOpt) =>
-            {
-                httpOpt.SkipNegotiation = true;
-            })
+            hub = hubBuilder.WithUrl(hubUri)
             .AddJsonProtocol(opt => opt.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)
             .Build();
 
@@ -248,11 +245,13 @@ else
             {
                 RoomData.CurrentVideo = video;
                 RoomData.UploadedVideos.Add(video);
+                DbContext.ChangeTracker.Clear();
                 InvokeAsync(StateHasChanged);
             });
             hub.On("VideoChangedFromHub", (VideoFile video) =>
             {
                 RoomData.CurrentVideo = video;
+                DbContext.ChangeTracker.Clear();
                 InvokeAsync(StateHasChanged);
             });
             hub.On("VideoRemovedFromHub", (VideoFile video) =>
@@ -442,7 +441,7 @@ else
 
         DbContext.Videos.Remove(video);
         RoomData.UploadedVideos.Remove(video);
-        if (DbContext.SaveChanges() != 0) //Somewhere near this place(when deleting video) it says that instance of RoomData already exists so it cannot update SQL database.
+        if (DbContext.SaveChanges() != 0)
         {
             File.Delete(video.Path);
             hub.SendAsync("VideoRemoved", roomId, video);
