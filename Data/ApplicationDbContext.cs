@@ -24,7 +24,7 @@ namespace WatchTogether3.Data
 
             builder.Entity<Room>()
                 .HasMany<VideoFile>(r => r.UploadedVideos)
-                .WithOne(v => v.Room).OnDelete(DeleteBehavior.NoAction);
+                .WithOne(v => v.Room).OnDelete(DeleteBehavior.Cascade);
 
 
             builder.Entity<Room>().Navigation(e => e.Owner).AutoInclude();

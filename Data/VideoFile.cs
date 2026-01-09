@@ -13,7 +13,7 @@ public class VideoFile
     public string FileName { get; set; } = string.Empty;
     public string Path { get; set; } = string.Empty;
     public DateTime UploadDate { get; set; }
-    public Room? Room { get; set; }
+    public Room Room { get; set; }
 
 
     public override bool Equals(object? obj)

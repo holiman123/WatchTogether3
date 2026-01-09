@@ -245,44 +245,54 @@ else
                 isActionReceivable = false;
                 JS.InvokeVoidAsync("SeekVideo", time);
             });
-            hub.On("VideoUploadedFromHub", (VideoFile video) =>
+            hub.On("RoomDataChangedFromHub", (Data.Room roomData) =>
             {
-                RoomData.CurrentVideo = video;
-                RoomData.UploadedVideos.Add(video);
-
-                DbContext.ChangeTracker.Clear();
-                InvokeAsync(StateHasChanged);
-            });
-            hub.On("VideoChangedFromHub", (VideoFile video) =>
-            {
-                RoomData.CurrentVideo = video;
-
-                DbContext.ChangeTracker.Clear();
-                InvokeAsync(StateHasChanged);
-            });
-            hub.On("VideoRenamedFromHub", (VideoFile video) =>
-            {
-                var localVideo = RoomData.UploadedVideos.FirstOrDefault(v => v.Id == video.Id);
-                if (localVideo is not null)
-                {
-                    localVideo.FriendlyName = video.FriendlyName;
-                }
-                DbContext.ChangeTracker.Clear();
-                InvokeAsync(StateHasChanged);
-            });
-            hub.On("VideoRemovedFromHub", (VideoFile video) =>
-            {
-                RoomData.UploadedVideos.Remove(video);
-
-                if (video == RoomData.CurrentVideo)
-                {
-                    RoomData.CurrentVideo = null;
+                if (roomData.CurrentVideo is null)
                     JS.InvokeVoidAsync("clearVideo");
-                }
 
-                DbContext.ChangeTracker.Clear();
+                DbContext.ChangeTracker.Clear(); // Changing tracking instance to new one
+                RoomData = roomData;
+                DbContext.Rooms.Attach(RoomData);
                 InvokeAsync(StateHasChanged);
             });
+            // hub.On("VideoUploadedFromHub", (VideoFile video) =>
+            // {
+            //     RoomData.CurrentVideo = video;
+            //     RoomData.UploadedVideos.Add(video);
+
+            //     DbContext.ChangeTracker.Clear();
+            //     InvokeAsync(StateHasChanged);
+            // });
+            // hub.On("VideoChangedFromHub", (VideoFile video) =>
+            // {
+            //     RoomData.CurrentVideo = video;
+
+            //     DbContext.ChangeTracker.Clear();
+            //     InvokeAsync(StateHasChanged);
+            // });
+            // hub.On("VideoRenamedFromHub", (VideoFile video) =>
+            // {
+            //     var localVideo = RoomData.UploadedVideos.FirstOrDefault(v => v.Id == video.Id);
+            //     if (localVideo is not null)
+            //     {
+            //         localVideo.FriendlyName = video.FriendlyName;
+            //     }
+            //     DbContext.ChangeTracker.Clear();
+            //     InvokeAsync(StateHasChanged);
+            // });
+            // hub.On("VideoRemovedFromHub", (VideoFile video) =>
+            // {
+            //     RoomData.UploadedVideos.Remove(video);
+
+            //     if (video == RoomData.CurrentVideo)
+            //     {
+            //         RoomData.CurrentVideo = null;
+            //         JS.InvokeVoidAsync("clearVideo");
+            //     }
+
+            //     DbContext.ChangeTracker.Clear();
+            //     InvokeAsync(StateHasChanged);
+            // });
 
             hub.StartAsync().Wait();
 
@@ -430,7 +440,8 @@ else
                 RoomData.UploadedVideos.Add(videoFile);
                 DbContext.SaveChanges();
 
-                await hub.InvokeAsync("VideoUploaded", roomId, videoFile);
+                //await hub.InvokeAsync("VideoUploaded", roomId, videoFile);
+                await hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
 
                 await Task.Delay(100);
 
@@ -445,7 +456,8 @@ else
         RoomData.CurrentVideo = video;
         DbContext.SaveChanges();
 
-        hub.SendAsync("VideoChanged", roomId, RoomData.CurrentVideo);
+        //hub.SendAsync("VideoChanged", roomId, RoomData.CurrentVideo);
+        hub.SendAsync("RoomDataChanged", roomId, RoomData);
     }
 
     private void RenameVideo(VideoFile video, string newName)
@@ -453,23 +465,31 @@ else
         video.FriendlyName = newName;
         DbContext.SaveChanges();
 
-        hub.SendAsync("VideoRenamed", roomId, video);
+        //hub.SendAsync("VideoRenamed", roomId, video);
+        hub.SendAsync("RoomDataChanged", roomId, RoomData);
     }
 
     private void RemoveVideo(VideoFile video)
     {
-        if (video == RoomData.CurrentVideo)
+        try
         {
-            RoomData.CurrentVideo = null;
-            JS.InvokeVoidAsync("clearVideo");
-        }
+            if (video == RoomData.CurrentVideo)
+            {
+                //RoomData.CurrentVideo = null;
+                JS.InvokeVoidAsync("clearVideo");
+            }
 
-        DbContext.Videos.Remove(video);
-        RoomData.UploadedVideos.Remove(video);
-        if (DbContext.SaveChanges() != 0)
+            DbContext.Videos.Remove(video);
+            RoomData.UploadedVideos.Remove(video);
+            if (DbContext.SaveChanges() != 0)
+            {
+                File.Delete(video.Path);
+                hub.SendAsync("RoomDataChanged", roomId, RoomData);
+            }
+        }
+        catch(Exception ex)
         {
-            File.Delete(video.Path);
-            hub.SendAsync("VideoRemoved", roomId, video);
+            _ = 0;
         }
     }
 
