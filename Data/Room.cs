@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using WatchTogether3.Data.OrderedList;
 
 namespace WatchTogether3.Data
 {
@@ -9,7 +10,7 @@ namespace WatchTogether3.Data
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public VideoFile? CurrentVideo { get; set; }
-        public List<VideoFile> UploadedVideos { get; set; } = new List<VideoFile>();
+        public OrderedList<VideoFile> UploadedVideos { get; set; } = new OrderedList<VideoFile>();
         public ApplicationUser Owner { get; set; }
         public bool IsPlaying { get; set; }
         public double CurrentTime

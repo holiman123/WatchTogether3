@@ -298,6 +298,9 @@ namespace WatchTogether3.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
                     b.Property<string>("Path")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -441,7 +444,7 @@ namespace WatchTogether3.Migrations
                     b.HasOne("WatchTogether3.Data.Room", "Room")
                         .WithMany("UploadedVideos")
                         .HasForeignKey("RoomId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Room");

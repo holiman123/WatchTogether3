@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WatchTogether3.Migrations
 {
     /// <inheritdoc />
-    public partial class mssqllocal_migration_189 : Migration
+    public partial class mssqllocal_migration_263 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -211,7 +211,8 @@ namespace WatchTogether3.Migrations
                     FileName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Path = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UploadDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    RoomId = table.Column<int>(type: "int", nullable: false)
+                    RoomId = table.Column<int>(type: "int", nullable: false),
+                    Order = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -220,7 +221,8 @@ namespace WatchTogether3.Migrations
                         name: "FK_Videos_Rooms_RoomId",
                         column: x => x.RoomId,
                         principalTable: "Rooms",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(

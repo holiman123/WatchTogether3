@@ -1,10 +1,11 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using WatchTogether3.Data.OrderedList;
 
 namespace WatchTogether3.Data;
 
-public class VideoFile
+public class VideoFile : OrderableItem
 {
     [Key]
     public int Id { get; set; }

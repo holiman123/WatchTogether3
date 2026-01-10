@@ -12,8 +12,8 @@ using WatchTogether3.Data;
 namespace WatchTogether3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260109162214_mssql.local_migration_189")]
-    partial class mssqllocal_migration_189
+    [Migration("20260110162502_mssql.local_migration_263")]
+    partial class mssqllocal_migration_263
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -301,6 +301,9 @@ namespace WatchTogether3.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
                     b.Property<string>("Path")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -444,7 +447,7 @@ namespace WatchTogether3.Migrations
                     b.HasOne("WatchTogether3.Data.Room", "Room")
                         .WithMany("UploadedVideos")
                         .HasForeignKey("RoomId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Room");

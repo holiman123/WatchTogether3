@@ -32,6 +32,8 @@
     <textarea @bind="tempNewVideoName" />
     <button @onclick="() => RenameVideo(video, tempNewVideoName)">Rename</button>
     <button @onclick="() => RemoveVideo(video)">X</button>
+    <button @onclick="() => MoveVideoUp(video)">↑</button>
+    <button @onclick="() => MoveVideoDown(video)">↓</button>
     <br />
 }
 @if (progress is null)
@@ -451,6 +453,30 @@ else
         await InvokeAsync(StateHasChanged);
     }
 
+    private void MoveVideoUp(VideoFile video)
+    {
+        int index = RoomData.UploadedVideos.IndexOf(video);
+        if (index != 0)
+        {
+            RoomData.UploadedVideos.ExchangeItems(index, index - 1);
+
+            DbContext.SaveChanges();
+            hub.SendAsync("RoomDataChanged", roomId, RoomData);
+        }
+    }
+
+    private void MoveVideoDown(VideoFile video)
+    {
+        int index = RoomData.UploadedVideos.IndexOf(video);
+        if (index != RoomData.UploadedVideos.Count - 1)
+        {
+            RoomData.UploadedVideos.ExchangeItems(index, index + 1);
+
+            DbContext.SaveChanges();
+            hub.SendAsync("RoomDataChanged", roomId, RoomData);
+        }
+    }
+
     private void ChangeVideo(VideoFile video)
     {
         RoomData.CurrentVideo = video;
@@ -471,25 +497,18 @@ else
 
     private void RemoveVideo(VideoFile video)
     {
-        try
+        if (video == RoomData.CurrentVideo)
         {
-            if (video == RoomData.CurrentVideo)
-            {
-                //RoomData.CurrentVideo = null;
-                JS.InvokeVoidAsync("clearVideo");
-            }
-
-            DbContext.Videos.Remove(video);
-            RoomData.UploadedVideos.Remove(video);
-            if (DbContext.SaveChanges() != 0)
-            {
-                File.Delete(video.Path);
-                hub.SendAsync("RoomDataChanged", roomId, RoomData);
-            }
+            //RoomData.CurrentVideo = null;
+            JS.InvokeVoidAsync("clearVideo");
         }
-        catch(Exception ex)
+
+        DbContext.Videos.Remove(video);
+        RoomData.UploadedVideos.Remove(video);
+        if (DbContext.SaveChanges() != 0)
         {
-            _ = 0;
+            File.Delete(video.Path);
+            hub.SendAsync("RoomDataChanged", roomId, RoomData);
         }
     }
 

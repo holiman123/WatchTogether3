@@ -6,10 +6,26 @@ using System.Text.Json.Serialization;
 using WatchTogether3.Components;
 using WatchTogether3.Components.Account;
 using WatchTogether3.Data;
+using WatchTogether3.Data.OrderedList;
 using WatchTogether3.Hubs;
 
 namespace WatchTogether3
 {
+    public class testClass : OrderableItem
+    {
+        public string origPlace;
+
+        public testClass(string origPlace)
+        {
+            this.origPlace = origPlace;
+        }
+
+        public override string ToString()
+        {
+            return $"Order:{Order}, Orig:{origPlace}";
+        }
+    }
+
     public class Program
     {
         public static void Main(string[] args)
