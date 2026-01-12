@@ -15,6 +15,59 @@ public class VideoFile : OrderableItem
     public string Path { get; set; } = string.Empty;
     public DateTime UploadDate { get; set; }
     public Room Room { get; set; }
+    public bool IsPlaying { get; set; }
+    public double CurrentTime
+    {
+        get
+        {
+            if (IsPlaying)
+            {
+                double timeSinceLastPlay = (DateTime.Now - LastPlayTime).TotalSeconds;
+                return field + timeSinceLastPlay;
+            }
+            else
+            {
+                return field;
+            }
+        }
+
+        set => field = value;
+    }
+
+    /// <summary>
+    /// Time of the last play action. <br/>
+    /// Used to calculate the current time when the video is playing.
+    /// </summary>
+    public DateTime LastPlayTime { get; set; }
+
+
+    public void Play()
+    {
+        if (!IsPlaying)
+        {
+            IsPlaying = true;
+            LastPlayTime = DateTime.Now;
+        }
+    }
+
+    public void Pause()
+    {
+        if (IsPlaying)
+        {
+            // Update CurrentTime to the exact time when paused
+            CurrentTime = CurrentTime;
+            IsPlaying = false;
+        }
+    }
+
+    public void Seek(double time)
+    {
+        CurrentTime = time;
+        if (IsPlaying)
+        {
+            LastPlayTime = DateTime.Now;
+        }
+    }
 
 
     public override bool Equals(object? obj)

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WatchTogether3.Migrations
 {
     /// <inheritdoc />
-    public partial class mssqllocal_migration_263 : Migration
+    public partial class mssqllocal_migration_420 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -184,9 +184,6 @@ namespace WatchTogether3.Migrations
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CurrentVideoId = table.Column<int>(type: "int", nullable: true),
                     OwnerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    IsPlaying = table.Column<bool>(type: "bit", nullable: false),
-                    CurrentTime = table.Column<double>(type: "float", nullable: false),
-                    LastPlayTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -212,6 +209,9 @@ namespace WatchTogether3.Migrations
                     Path = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UploadDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     RoomId = table.Column<int>(type: "int", nullable: false),
+                    IsPlaying = table.Column<bool>(type: "bit", nullable: false),
+                    CurrentTime = table.Column<double>(type: "float", nullable: false),
+                    LastPlayTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Order = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>

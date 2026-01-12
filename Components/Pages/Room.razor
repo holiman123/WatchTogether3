@@ -26,7 +26,7 @@
 
 <InputFile id="fileUpload" OnChange="LoadFile" style="display:none" />
 
-@foreach(VideoFile video in RoomData.UploadedVideos)
+@foreach(VideoFile video in RoomData.UploadedVideos.OrderBy(v => v.Order))
 {
     <button @onclick="() => ChangeVideo(video)">@video.FriendlyName</button>
     <textarea @bind="tempNewVideoName" />
@@ -54,7 +54,8 @@ else
         onpause="OnPauseClick()"
         onplay="OnProceedClick()"
         onseeked="OnSeekClick()"
-        src="@RoomData.CurrentVideo?.Url">
+        src="@RoomData.CurrentVideo?.Url"
+        >
     @* @if (RoomData.CurrentVideo is not null)
     {
         <source src="@RoomData.CurrentVideo.Url" type="video/mp4">
@@ -93,10 +94,25 @@ else
     });
 
     var video = document.getElementById("video_comp");
+    var DoSendAction = true;
+
+    video.addEventListener('loadedmetadata', () => {
+        console.log('Video metadata loaded. Requesting video init');
+        requestInitVideo();
+    });
+
+    function requestInitVideo()
+    {
+        if (dnh != null) {
+            dnh.invokeMethodAsync('InitVideo');
+            play_btn.style.visibility = "hidden";
+        }
+    }
 
     // DotNet reference holder
     var dnh = null;
     function setDotnetReference(dotnetRef) {
+        console.log("received DNR");
         dnh = dotnetRef;
     }
 
@@ -106,18 +122,25 @@ else
         video.load();
     }
 
-    function initVideo(time, isPlay) {
-        video.currentTime = time;
+    async function initVideo(time, isPlay) {
+        console.log("initVideo");
+        console.log(time);
+
+        DoSendAction = false;
+        console.log(await seekVideo(video, time));
+
         if (isPlay) {
             var promise = video.play();
 
             if (promise !== undefined) {
                 promise.then(_ => {
                     // Autoplay started!
+                    console.log("autoplay");
                     video.setAttribute("controls", "");
                 }).catch(error => {
                     // Autoplay was prevented.
                     // Show a "Play" button so that user can start playback.
+                    console.log("no autoplay!");
                     play_btn.style.visibility = "visible";
                 });
             }
@@ -125,56 +148,107 @@ else
         else {
             video.setAttribute("controls", "");
         }
-    }
 
-    function requestInitVideo()
-    {
-        dnh.invokeMethodAsync('InitVideo');
-        play_btn.style.visibility = "hidden";
+        DoSendAction = true;
     }
 
 
     function SendAction(action, ...args) {
-        if (dnh == null)
+        if (dnh == null || DoSendAction == false)
+        {
+            console.log(dnh);
+            console.log(DoSendAction);
             return;
+        }
 
         dnh.invokeMethodAsync('ReceiveAction', action, args);
+        console.log("SendAction");
     }
 
 
 
-    function PauseVideo(time) {
-        video.pause();
-        video.currentTime = time;
+    async function PauseVideo(time) {
+        console.log("PauseVideo");
+        DoSendAction = false;
+        await video.pause();
+        await seekVideo(video, time);
+        DoSendAction = true;
     }
     function OnPauseClick() {
         SendAction(UserActions.PauseVideo, video.currentTime);
     }
 
 
-    function ProceedVideo() {
-        video.play();
+    async function ProceedVideo() {
+        console.log("ProceedVideo");
+        DoSendAction = false;
+        await video.play();
+        DoSendAction = true;
     }
     function OnProceedClick() {
         SendAction(UserActions.ProceedVideo);
     }
 
 
-    function SeekVideo(time) {
-        video.currentTime = time;
+    async function SeekVideo(time) {
+        console.log("SeekVideo");
+        DoSendAction = false;
+        await seekVideo(video, time);
+        DoSendAction = true;
     }
     function OnSeekClick() {
+        console.log("videoEvent");
+        console.log(video.currentTime);
         SendAction(UserActions.SeekVideo, video.currentTime);
+    }
+
+
+    function seekVideo(videoElement, timeInSeconds) {
+        if (timeInSeconds > videoElement.duration)
+            return false;
+        return new Promise((resolve, reject) => {
+            if (!(videoElement instanceof HTMLVideoElement)) {
+                reject(new Error("Invalid video element."));
+            }
+            if (typeof timeInSeconds !== "number" || timeInSeconds < 0) {
+                reject(new Error("Invalid seek time."));
+            }
+            if (videoElement.readyState < 1) {
+                // Wait until metadata is loaded to know duration
+                videoElement.addEventListener("loadedmetadata", () => {
+                    if (timeInSeconds > videoElement.duration) {
+                        reject(new Error("Seek time exceeds video duration."));
+                    }
+                    videoElement.currentTime = timeInSeconds;
+                }, { once: true });
+            } else {
+                if (timeInSeconds > videoElement.duration) {
+                    reject(new Error("Seek time exceeds video duration."));
+                }
+                videoElement.currentTime = timeInSeconds;
+            }
+
+            // Resolve when seeking is complete
+            videoElement.addEventListener("seeked", () => {
+                resolve(`Seeked to ${timeInSeconds} seconds`);
+            }, { once: true });
+
+            // Optional: handle seek errors
+            videoElement.addEventListener("error", () => {
+                reject(new Error("An error occurred while seeking."));
+            }, { once: true });
+        });
     }
 </script>
 
 @code {
+    //First time changing video, it is not set time correctly. This is because video is not fully loaded when correct time is applied
 
     private double? progress;
 
     private HubConnection hub;
 
-    private bool isActionReceivable = true;
+    //private bool isActionReceivable = true;
 
     [Parameter]
     public int roomId { get; set; }
@@ -234,28 +308,33 @@ else
             });
             hub.On("PauseFromHub", (double time) =>
             {
-                isActionReceivable = false;
                 JS.InvokeVoidAsync("PauseVideo", time);
             });
             hub.On("ProceedFromHub", () =>
             {
-                isActionReceivable = false;
                 JS.InvokeVoidAsync("ProceedVideo");
             });
             hub.On("SeekFromHub", (double time) =>
             {
-                isActionReceivable = false;
                 JS.InvokeVoidAsync("SeekVideo", time);
             });
-            hub.On("RoomDataChangedFromHub", (Data.Room roomData) =>
+            hub.On("RoomDataChangedFromHub", async (Data.Room roomData) =>
             {
                 if (roomData.CurrentVideo is null)
                     JS.InvokeVoidAsync("clearVideo");
 
+                VideoFile? prevVideo = RoomData.CurrentVideo;
+                VideoFile? newVideo = roomData.CurrentVideo;
+
                 DbContext.ChangeTracker.Clear(); // Changing tracking instance to new one
                 RoomData = roomData;
                 DbContext.Rooms.Attach(RoomData);
-                InvokeAsync(StateHasChanged);
+                await InvokeAsync(StateHasChanged);
+
+                if (prevVideo != newVideo)
+                {
+                    //InitVideo();
+                }
             });
             // hub.On("VideoUploadedFromHub", (VideoFile video) =>
             // {
@@ -307,7 +386,7 @@ else
                 hub.InvokeAsync("EnterRoom", roomId, String.Empty).Wait();
 
 
-            InitVideo();
+            //InitVideo();
 
             InvokeAsync(StateHasChanged);
         }
@@ -318,73 +397,65 @@ else
     [JSInvokable]
     public void ReceiveAction(UserActions2 actions, params JsonElement[] args)
     {
-        if (isActionReceivable)
+        switch (actions)
         {
-            switch (actions)
-            {
-                case UserActions2.PauseVideo:
-                    {
-                        double time = args[0].GetDouble();
-                        SendVideoPause(time);
-                        break;
-                    }
-                case UserActions2.ProceedVideo:
-                    {
-                        SendVideoProceed();
-                        break;
-                    }
-                case UserActions2.SeekVideo:
-                    {
-                        double time = args[0].GetDouble();
-                        SendVideoSeek(time);
-                        break;
-                    }
-            }
+            case UserActions2.PauseVideo:
+                {
+                    double time = args[0].GetDouble();
+                    SendVideoPause(time);
+                    break;
+                }
+            case UserActions2.ProceedVideo:
+                {
+                    SendVideoProceed();
+                    break;
+                }
+            case UserActions2.SeekVideo:
+                {
+                    double time = args[0].GetDouble();
+                    SendVideoSeek(time);
+                    break;
+                }
         }
-
-        isActionReceivable = true;
     }
 
     [JSInvokable]
     public void InitVideo()
     {
-        JS.InvokeVoidAsync("initVideo", RoomData.CurrentTime, RoomData.IsPlaying);
+        if (RoomData.CurrentVideo is not null)
+            JS.InvokeVoidAsync("initVideo", RoomData.CurrentVideo.CurrentTime, RoomData.CurrentVideo.IsPlaying);
+        else
+            JS.InvokeVoidAsync("initVideo", 0, false);
     }
 
     private void SendVideoPause(double time)
     {
-        if (hub is null)
+        if (hub is null || RoomData.CurrentVideo is null)
             return;
 
         hub.SendAsync("Paused", roomId, time);
 
-        RoomData.CurrentTime = time;
-        RoomData.IsPlaying = false;
+        RoomData.CurrentVideo.Pause();
         DbContext.SaveChanges();
     }
     private void SendVideoProceed()
     {
-        if (hub is null)
+        if (hub is null || RoomData.CurrentVideo is null)
             return;
 
         hub.SendAsync("Proceeded", roomId);
 
-        RoomData.LastPlayTime = DateTime.Now;
-        RoomData.IsPlaying = true;
+        RoomData.CurrentVideo.Play();
         DbContext.SaveChanges();
     }
     private void SendVideoSeek(double time)
     {
-        if (hub is null)
+        if (hub is null || RoomData.CurrentVideo is null)
             return;
 
         hub.SendAsync("Seeked", roomId, time);
 
-        if (RoomData.IsPlaying)
-        {
-            RoomData.LastPlayTime = DateTime.Now;
-        }
-        RoomData.CurrentTime = time;
+        RoomData.CurrentVideo.Seek(time);
         DbContext.SaveChanges();
     }
 
@@ -479,8 +550,10 @@ else
 
     private void ChangeVideo(VideoFile video)
     {
+        RoomData.CurrentVideo?.Pause();
         RoomData.CurrentVideo = video;
         DbContext.SaveChanges();
+        //InitVideo();
 
         //hub.SendAsync("VideoChanged", roomId, RoomData.CurrentVideo);
         hub.SendAsync("RoomDataChanged", roomId, RoomData);
@@ -493,6 +566,8 @@ else
 
         //hub.SendAsync("VideoRenamed", roomId, video);
         hub.SendAsync("RoomDataChanged", roomId, RoomData);
+
+        tempNewVideoName = String.Empty;
     }
 
     private void RemoveVideo(VideoFile video)
@@ -544,8 +619,8 @@ else
             {
                 users.Remove(User);
 
-                if (users.Count == 0)
-                    SendVideoPause(RoomData.CurrentTime);
+                if (users.Count == 0 && RoomData.CurrentVideo is not null)
+                    SendVideoPause(RoomData.CurrentVideo.CurrentTime);
             }
 
             if (User is not null)

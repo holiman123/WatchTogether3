@@ -12,8 +12,8 @@ using WatchTogether3.Data;
 namespace WatchTogether3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260110162502_mssql.local_migration_263")]
-    partial class mssqllocal_migration_263
+    [Migration("20260111124428_mssql.local_migration_420")]
+    partial class mssqllocal_migration_420
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -256,17 +256,8 @@ namespace WatchTogether3.Migrations
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<double>("CurrentTime")
-                        .HasColumnType("float");
-
                     b.Property<int?>("CurrentVideoId")
                         .HasColumnType("int");
-
-                    b.Property<bool>("IsPlaying")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("LastPlayTime")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -293,6 +284,9 @@ namespace WatchTogether3.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<double>("CurrentTime")
+                        .HasColumnType("float");
+
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -300,6 +294,12 @@ namespace WatchTogether3.Migrations
                     b.Property<string>("FriendlyName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsPlaying")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("LastPlayTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("Order")
                         .HasColumnType("int");
