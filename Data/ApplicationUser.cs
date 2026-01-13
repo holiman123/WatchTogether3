@@ -7,6 +7,10 @@ namespace WatchTogether3.Data
     public class ApplicationUser : IdentityUser
     {
         public List<Room> Rooms { get; set; }
-    }
 
+        public List<Friendship> Friendships { get; set; }
+
+        public List<Friendship> PendingFriendRequests => Friendships?
+            .FindAll(f => f.Status == FriendshipStatus.Requested);
+    }
 }

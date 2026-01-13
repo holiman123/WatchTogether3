@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WatchTogether3.Migrations
 {
     /// <inheritdoc />
-    public partial class mssqllocal_migration_420 : Migration
+    public partial class mssqllocal_migration_833 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -176,6 +176,40 @@ namespace WatchTogether3.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Friends",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MeId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    FriendId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Friends", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Friends_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Friends_AspNetUsers_FriendId",
+                        column: x => x.FriendId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Friends_AspNetUsers_MeId",
+                        column: x => x.MeId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Rooms",
                 columns: table => new
                 {
@@ -270,6 +304,21 @@ namespace WatchTogether3.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Friends_ApplicationUserId",
+                table: "Friends",
+                column: "ApplicationUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Friends_FriendId",
+                table: "Friends",
+                column: "FriendId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Friends_MeId",
+                table: "Friends",
+                column: "MeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Rooms_CurrentVideoId",
                 table: "Rooms",
                 column: "CurrentVideoId");
@@ -320,6 +369,9 @@ namespace WatchTogether3.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "Friends");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

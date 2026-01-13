@@ -242,6 +242,40 @@ namespace WatchTogether3.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("WatchTogether3.Data.Friendship", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApplicationUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FriendId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("MeId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId");
+
+                    b.HasIndex("FriendId");
+
+                    b.HasIndex("MeId");
+
+                    b.ToTable("Friends");
+                });
+
             modelBuilder.Entity("WatchTogether3.Data.Room", b =>
                 {
                     b.Property<int>("Id")
@@ -422,6 +456,27 @@ namespace WatchTogether3.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("WatchTogether3.Data.Friendship", b =>
+                {
+                    b.HasOne("WatchTogether3.Data.ApplicationUser", null)
+                        .WithMany("PendingFriendRequests")
+                        .HasForeignKey("ApplicationUserId");
+
+                    b.HasOne("WatchTogether3.Data.ApplicationUser", "Friend")
+                        .WithMany()
+                        .HasForeignKey("FriendId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("WatchTogether3.Data.ApplicationUser", "Me")
+                        .WithMany("Friendships")
+                        .HasForeignKey("MeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Friend");
+
+                    b.Navigation("Me");
+                });
+
             modelBuilder.Entity("WatchTogether3.Data.Room", b =>
                 {
                     b.HasOne("WatchTogether3.Data.VideoFile", "CurrentVideo")
@@ -452,6 +507,10 @@ namespace WatchTogether3.Migrations
 
             modelBuilder.Entity("WatchTogether3.Data.ApplicationUser", b =>
                 {
+                    b.Navigation("Friendships");
+
+                    b.Navigation("PendingFriendRequests");
+
                     b.Navigation("Rooms");
                 });
 

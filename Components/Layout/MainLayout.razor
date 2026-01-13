@@ -3,12 +3,14 @@
 
 @inject AuthenticationStateProvider auth
 
-<NavLink href="/">Home</NavLink>
+<NavLink href="/">Home </NavLink>
 
-<NavLink href="/Account/Manage">Account</NavLink>
+<NavLink href="/Account/Manage">Account </NavLink>
 
 <AuthorizeView>
     <Authorized>
+        <NavLink href="/Account/Friends">Friends </NavLink>
+
         You logged in as @User.Identity.Name
     </Authorized>
 </AuthorizeView>
@@ -22,7 +24,7 @@
 </div>
 
 @code
-                {
+{
     private ClaimsPrincipal User;
 
     protected override async void OnInitialized()

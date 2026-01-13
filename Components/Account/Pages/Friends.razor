@@ -1,0 +1,95 @@
+﻿@page "/Account/Friends"
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using WatchTogether3.Data
+
+@inject AuthenticationStateProvider auth
+@inject UserManager<ApplicationUser> userManager
+@inject ApplicationDbContext dbContext
+
+<h3>Friends</h3>
+
+<p>Your ID to give to your friend: @User.Id</p>
+
+<textarea @bind="friendId"></textarea>
+<button class="btn btn-primary" @onclick="() => RequestFriendship()">Add Friend</button>
+
+<p>Your friends:</p>
+@foreach (Friendship friendship in User.Friendships)
+{
+    <div>
+        @friendship.Friend.UserName
+        @if (friendship.Status == FriendshipStatus.Requested)
+        {
+            <button class="btn btn-primary" @onclick="() => AcceptFriendRequest(friendship)">Accept</button>
+        }
+    </div>
+}
+
+@code {
+    private string friendId { get; set; }
+
+    private ApplicationUser User { get; set; }
+
+    protected override void OnInitialized()
+    {
+        ClaimsPrincipal claims = auth.GetAuthenticationStateAsync().Result.User;
+
+        var tempUser = userManager.GetUserAsync(claims).Result;
+        User = dbContext.Users.Include(u => u.Friendships).First(u => u.Id == tempUser.Id);
+    }
+
+    private async Task RequestFriendship()
+    {
+        dbContext.ChangeTracker.Clear();
+        ApplicationUser thisUser = dbContext.Users.Include(u => u.Friendships).First(u => u.Id == User.Id);
+        dbContext.Attach(thisUser);
+        ApplicationUser otherUser = dbContext.Users.Include(u => u.Friendships).First(u => u.Id == friendId);
+        dbContext.Attach(otherUser);
+
+
+        if (otherUser == null || thisUser.Friendships.Any(f => f.Friend.Id == otherUser.Id))
+        {
+            return;
+        }
+
+        Friendship friendship = new Friendship
+        {
+            Me = thisUser,
+            Friend = otherUser,
+            Status = FriendshipStatus.Sent,
+            CreationDate = DateTime.Now
+        };
+        thisUser.Friendships.Add(friendship);
+        dbContext.SaveChanges();
+
+        Friendship otherFriendship = new Friendship
+        {
+            Me = otherUser,
+            Friend = thisUser,
+            Status = FriendshipStatus.Requested,
+            CreationDate = DateTime.Now
+        };
+        otherUser.Friendships.Add(otherFriendship);
+        dbContext.SaveChanges();
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AcceptFriendRequest(Friendship friendship)
+    {
+        friendship.Status = FriendshipStatus.Accepted;
+
+        ApplicationUser friend = dbContext.Users.Include(u => u.Friendships).First(u => u.Id == friendship.Friend.Id);
+
+        friend.Friendships.First(f => f.Friend.Id == User.Id).Status = FriendshipStatus.Accepted;
+        //friendship.FriendshipOfFriend.Status = FriendshipStatus.Accepted;
+        
+        await userManager.UpdateAsync(User);
+        await userManager.UpdateAsync(friendship.Friend);
+        InvokeAsync(StateHasChanged);
+    }
+}
