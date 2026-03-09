@@ -39,8 +39,6 @@ namespace WatchTogether3.Data
 
             builder.Entity<Room>().Navigation(e => e.UploadedVideos).AutoInclude();
 
-            //builder.Entity<ApplicationUser>().Navigation(e => e.Friendships).AutoInclude();
-
             builder.Entity<Friendship>().Navigation(f => f.Friend).AutoInclude();
 
             base.OnModelCreating(builder);

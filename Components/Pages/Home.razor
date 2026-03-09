@@ -4,6 +4,7 @@
 @using System.Threading.Tasks
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
 @using WatchTogether3.Data
 
 @inject NavigationManager Navigation
@@ -11,7 +12,7 @@
 @inject AuthenticationStateProvider auth
 @inject UserManager<ApplicationUser> userManager
 
-<PageTitle>List</PageTitle>
+<PageTitle>Home</PageTitle>
 
 <AuthorizeView>
     <Authorized>
@@ -29,14 +30,18 @@
 </AuthorizeView>
 
 <br />
+<InputCheckbox @bind-Value="FriendsOnly">Friends rooms</InputCheckbox>
 <hr />
 @foreach (Data.Room room in DbContext.Rooms)
 {
-    <p>@room.Name</p>
-    <p>by @room.Owner.UserName</p>
-    <p>watching @room.CurrentVideo</p>
-    <button @onclick="() => GoToRoom(room.Id)">Join Room</button>
-    <hr />
+    if (!FriendsOnly || User.Friendships.Where(f => f.Status == FriendshipStatus.Accepted).Select(f => f.Friend).Contains(room.Owner))
+    {
+        <p>@room.Name</p>
+        <p>by @room.Owner.UserName</p>
+        <p>watching @room.CurrentVideo</p>
+        <button @onclick="() => GoToRoom(room.Id)">Join Room</button>
+        <hr />
+    }
 }
 
 <script>
@@ -44,14 +49,18 @@
 </script>
 
 @code {
+    private bool FriendsOnly { get; set; } = false;
+
     private string roomName = string.Empty;
 
-    private ClaimsPrincipal User { get; set; }
+    private ApplicationUser User { get; set; }
 
     protected override void OnInitialized()
     {
         var state = auth.GetAuthenticationStateAsync().Result;
-        User = state.User;
+        User = DbContext.Users
+            .Include(u => u.Friendships)
+            .First(u => u.Id == userManager.GetUserAsync(state.User).Result.Id);
 
         base.OnInitialized();
     }
@@ -61,15 +70,13 @@
         if (roomName == string.Empty)
             return;
 
-        var user = userManager.GetUserAsync(User).Result;
-
-        if (user is null)
+        if (User is null)
             return;
 
         Data.Room newRoom = new Data.Room 
         { 
             Name = roomName,
-            Owner = user,
+            Owner = User,
             CreationDate = DateTime.Now
         };
 

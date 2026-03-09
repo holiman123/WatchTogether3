@@ -11,16 +11,6 @@ namespace WatchTogether3.Data
 
         public List<Friendship> Friendships { get; set; }
 
-        //public List<Friendship> FriendshipsSent { get; set; }
-
-        //public List<Friendship> FriendshipsReceived { get; set; }
-
-        //[NotMapped]
-        //public List<Friendship> Friendships => FriendshipsSent
-        //    .Concat(FriendshipsReceived)
-        //    .Distinct()
-        //    .ToList();
-
         [NotMapped]
         public List<Friendship> PendingFriendRequests => Friendships?
             .FindAll(f => f.Status == FriendshipStatus.Requested);
