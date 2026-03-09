@@ -12,8 +12,8 @@ using WatchTogether3.Data;
 namespace WatchTogether3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260113173549_mssql.local_migration_833")]
-    partial class mssqllocal_migration_833
+    [Migration("20260309170200_mssql.local_migration_811")]
+    partial class mssqllocal_migration_811
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -253,9 +253,6 @@ namespace WatchTogether3.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ApplicationUserId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("datetime2");
 
@@ -269,8 +266,6 @@ namespace WatchTogether3.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ApplicationUserId");
 
                     b.HasIndex("FriendId");
 
@@ -461,10 +456,6 @@ namespace WatchTogether3.Migrations
 
             modelBuilder.Entity("WatchTogether3.Data.Friendship", b =>
                 {
-                    b.HasOne("WatchTogether3.Data.ApplicationUser", null)
-                        .WithMany("PendingFriendRequests")
-                        .HasForeignKey("ApplicationUserId");
-
                     b.HasOne("WatchTogether3.Data.ApplicationUser", "Friend")
                         .WithMany()
                         .HasForeignKey("FriendId")
@@ -511,8 +502,6 @@ namespace WatchTogether3.Migrations
             modelBuilder.Entity("WatchTogether3.Data.ApplicationUser", b =>
                 {
                     b.Navigation("Friendships");
-
-                    b.Navigation("PendingFriendRequests");
 
                     b.Navigation("Rooms");
                 });

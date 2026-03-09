@@ -13,35 +13,24 @@ namespace WatchTogether3.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             builder.Entity<Room>()
-                .HasKey(r => r.Id);
-
-            builder.Entity<Room>()
                 .HasOne<ApplicationUser>(r => r.Owner)
                 .WithMany(u => u.Rooms);
 
             builder.Entity<Room>()
                 .HasMany<VideoFile>(r => r.UploadedVideos)
-                .WithOne(v => v.Room).OnDelete(DeleteBehavior.Cascade); // TODO: Remove OnDelete and check
+                .WithOne(v => v.Room)
+                .OnDelete(DeleteBehavior.Cascade); // TODO: Remove OnDelete and check
 
-            //builder.Entity<ApplicationUser>()
-            //    .HasMany(u => u.Friendships)
-            //    .WithOne(fr => fr.Me)
-            //    .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Friendship>()
-                .HasOne(fr => fr.Me)
-                .WithMany(u => u.Friendships)
+                .HasOne(f => f.Me)
+                .WithMany(me => me.Friendships)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Friendship>()
-                .HasOne(fr => fr.Friend)
+                .HasOne(f => f.Friend)
                 .WithMany()
                 .OnDelete(DeleteBehavior.Restrict);
-
-            //builder.Entity<Friendship>()
-            //    .HasOne(fr => fr.FriendshipOfFriend)
-            //    .WithOne()
-            //    .OnDelete(DeleteBehavior.Restrict);
 
 
             builder.Entity<Room>().Navigation(e => e.Owner).AutoInclude();

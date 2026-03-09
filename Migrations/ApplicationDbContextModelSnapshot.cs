@@ -250,9 +250,6 @@ namespace WatchTogether3.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ApplicationUserId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("datetime2");
 
@@ -266,8 +263,6 @@ namespace WatchTogether3.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ApplicationUserId");
 
                     b.HasIndex("FriendId");
 
@@ -458,10 +453,6 @@ namespace WatchTogether3.Migrations
 
             modelBuilder.Entity("WatchTogether3.Data.Friendship", b =>
                 {
-                    b.HasOne("WatchTogether3.Data.ApplicationUser", null)
-                        .WithMany("PendingFriendRequests")
-                        .HasForeignKey("ApplicationUserId");
-
                     b.HasOne("WatchTogether3.Data.ApplicationUser", "Friend")
                         .WithMany()
                         .HasForeignKey("FriendId")
@@ -508,8 +499,6 @@ namespace WatchTogether3.Migrations
             modelBuilder.Entity("WatchTogether3.Data.ApplicationUser", b =>
                 {
                     b.Navigation("Friendships");
-
-                    b.Navigation("PendingFriendRequests");
 
                     b.Navigation("Rooms");
                 });

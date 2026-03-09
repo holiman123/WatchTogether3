@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WatchTogether3.Migrations
 {
     /// <inheritdoc />
-    public partial class mssqllocal_migration_833 : Migration
+    public partial class mssqllocal_migration_811 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -184,17 +184,11 @@ namespace WatchTogether3.Migrations
                     MeId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     FriendId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     Status = table.Column<int>(type: "int", nullable: false),
-                    CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Friends", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Friends_AspNetUsers_ApplicationUserId",
-                        column: x => x.ApplicationUserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Friends_AspNetUsers_FriendId",
                         column: x => x.FriendId,
@@ -302,11 +296,6 @@ namespace WatchTogether3.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Friends_ApplicationUserId",
-                table: "Friends",
-                column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Friends_FriendId",

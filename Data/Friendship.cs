@@ -6,9 +6,11 @@ public class Friendship
 {
     [Key]
     public int Id { get; set; }
-    //public Friendship? FriendshipOfFriend { get; set; }
+    
     public ApplicationUser? Me { get; set; }
+
     public ApplicationUser? Friend { get; set; }
+
     public FriendshipStatus Status { get; set; }
     public DateTime CreationDate { get; set; }
 }
