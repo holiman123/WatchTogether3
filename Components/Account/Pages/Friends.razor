@@ -26,6 +26,10 @@
         {
             <button class="btn btn-primary" @onclick="() => AcceptFriendRequest(friendship)">Accept</button>
         }
+        else
+        {
+            <button class="btn btn-primary" @onclick="() => RemoveFriend(friendship)">Remove</button>
+        }
     </div>
 }
 
@@ -44,32 +48,28 @@
 
     private async Task RequestFriendship()
     {
-        dbContext.ChangeTracker.Clear();
-        ApplicationUser thisUser = dbContext.Users.Include(u => u.Friendships).First(u => u.Id == User.Id);
-        dbContext.Attach(thisUser);
+        // TODO: make it FriendshipsManager
         ApplicationUser otherUser = dbContext.Users.Include(u => u.Friendships).First(u => u.Id == friendId);
-        dbContext.Attach(otherUser);
 
-
-        if (otherUser == null || thisUser.Friendships.Any(f => f.Friend.Id == otherUser.Id))
+        if (otherUser == null || User.Friendships.Any(f => f.Friend.Id == otherUser.Id))
         {
             return;
         }
 
         Friendship friendship = new Friendship
         {
-            Me = thisUser,
+            Me = User,
             Friend = otherUser,
             Status = FriendshipStatus.Sent,
             CreationDate = DateTime.Now
         };
-        thisUser.Friendships.Add(friendship);
+        User.Friendships.Add(friendship);
         dbContext.SaveChanges();
 
         Friendship otherFriendship = new Friendship
         {
             Me = otherUser,
-            Friend = thisUser,
+            Friend = User,
             Status = FriendshipStatus.Requested,
             CreationDate = DateTime.Now
         };
@@ -81,15 +81,28 @@
 
     private async Task AcceptFriendRequest(Friendship friendship)
     {
+        // TODO: make it FriendshipsManager
         friendship.Status = FriendshipStatus.Accepted;
 
         ApplicationUser friend = dbContext.Users.Include(u => u.Friendships).First(u => u.Id == friendship.Friend.Id);
 
         friend.Friendships.First(f => f.Friend.Id == User.Id).Status = FriendshipStatus.Accepted;
         //friendship.FriendshipOfFriend.Status = FriendshipStatus.Accepted;
-        
+
         await userManager.UpdateAsync(User);
         await userManager.UpdateAsync(friendship.Friend);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RemoveFriend(Friendship friendship)
+    {
+        // TODO: make it FriendshipsManager
+        Friendship otherFriendship = friendship.Friend.Friendships.First(f => f.Friend == User);
+
+        dbContext.Friends.Remove(friendship);
+        dbContext.Friends.Remove(otherFriendship);
+        dbContext.SaveChanges();
+
         InvokeAsync(StateHasChanged);
     }
 }
