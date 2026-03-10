@@ -19,7 +19,7 @@ namespace WatchTogether3.Data
             builder.Entity<Room>()
                 .HasMany<VideoFile>(r => r.UploadedVideos)
                 .WithOne(v => v.Room)
-                .OnDelete(DeleteBehavior.Cascade); // TODO: Remove OnDelete and check
+                .OnDelete(DeleteBehavior.Cascade);
 
 
             builder.Entity<Friendship>()
