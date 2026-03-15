@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WatchTogether3.Migrations
 {
     /// <inheritdoc />
-    public partial class mssqllocal_migration_811 : Migration
+    public partial class mssqllocal_migration_593 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -204,6 +204,42 @@ namespace WatchTogether3.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ApplicationUserRoom",
+                columns: table => new
+                {
+                    AllowedToEnterUsersId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RoomId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ApplicationUserRoom", x => new { x.AllowedToEnterUsersId, x.RoomId });
+                    table.ForeignKey(
+                        name: "FK_ApplicationUserRoom_AspNetUsers_AllowedToEnterUsersId",
+                        column: x => x.AllowedToEnterUsersId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ApplicationUserRoom1",
+                columns: table => new
+                {
+                    AllowedToControlUsersId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Room1Id = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ApplicationUserRoom1", x => new { x.AllowedToControlUsersId, x.Room1Id });
+                    table.ForeignKey(
+                        name: "FK_ApplicationUserRoom1_AspNetUsers_AllowedToControlUsersId",
+                        column: x => x.AllowedToControlUsersId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Rooms",
                 columns: table => new
                 {
@@ -211,8 +247,10 @@ namespace WatchTogether3.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CurrentVideoId = table.Column<int>(type: "int", nullable: true),
-                    OwnerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    OwnerId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EnterRoomPrivacyLevel = table.Column<int>(type: "int", nullable: false),
+                    ControlRoomPrivacyLevel = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -221,8 +259,7 @@ namespace WatchTogether3.Migrations
                         name: "FK_Rooms_AspNetUsers_OwnerId",
                         column: x => x.OwnerId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -252,6 +289,16 @@ namespace WatchTogether3.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ApplicationUserRoom_RoomId",
+                table: "ApplicationUserRoom",
+                column: "RoomId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ApplicationUserRoom1_Room1Id",
+                table: "ApplicationUserRoom1",
+                column: "Room1Id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -323,6 +370,22 @@ namespace WatchTogether3.Migrations
                 column: "RoomId");
 
             migrationBuilder.AddForeignKey(
+                name: "FK_ApplicationUserRoom_Rooms_RoomId",
+                table: "ApplicationUserRoom",
+                column: "RoomId",
+                principalTable: "Rooms",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_ApplicationUserRoom1_Rooms_Room1Id",
+                table: "ApplicationUserRoom1",
+                column: "Room1Id",
+                principalTable: "Rooms",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
                 name: "FK_Rooms_Videos_CurrentVideoId",
                 table: "Rooms",
                 column: "CurrentVideoId",
@@ -338,8 +401,14 @@ namespace WatchTogether3.Migrations
                 table: "Rooms");
 
             migrationBuilder.DropForeignKey(
-                name: "FK_Rooms_Videos_CurrentVideoId",
-                table: "Rooms");
+                name: "FK_Videos_Rooms_RoomId",
+                table: "Videos");
+
+            migrationBuilder.DropTable(
+                name: "ApplicationUserRoom");
+
+            migrationBuilder.DropTable(
+                name: "ApplicationUserRoom1");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
@@ -369,10 +438,10 @@ namespace WatchTogether3.Migrations
                 name: "AspNetUsers");
 
             migrationBuilder.DropTable(
-                name: "Videos");
+                name: "Rooms");
 
             migrationBuilder.DropTable(
-                name: "Rooms");
+                name: "Videos");
         }
     }
 }

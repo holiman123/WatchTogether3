@@ -21,6 +21,44 @@
             <label for="roomName">Room Name:</label>
             <input type="text" id="roomName" name="roomName" @bind="roomName" />
             <br />
+
+            <div>
+                <p>Join room privacy</p>
+			    <InputCheckbox @bind-Value="EnterRoomSecLevel.Public"/>
+                Public
+                <br/>
+                <InputCheckbox @bind-Value="EnterRoomSecLevel.Password"  />
+                Password
+                <br />
+                <InputCheckbox @bind-Value="EnterRoomSecLevel.Friends"  />
+                Friends
+                <br />
+                <InputCheckbox @bind-Value="EnterRoomSecLevel.List"  />
+                List
+                <br />
+                <InputCheckbox @bind-Value="EnterRoomSecLevel.Owner"  />
+                Owner
+            </div>
+
+            <div>
+                <p>Control room privacy</p>
+                <InputCheckbox @bind-Value="ControlRoomSecLevel.Public" />
+                Public
+                <br />
+                <InputCheckbox @bind-Value="ControlRoomSecLevel.Password" />
+                Password
+                <br />
+                <InputCheckbox @bind-Value="ControlRoomSecLevel.Friends" />
+                Friends
+                <br />
+                <InputCheckbox @bind-Value="ControlRoomSecLevel.List" />
+                List
+                <br />
+                <InputCheckbox @bind-Value="ControlRoomSecLevel.Owner" />
+                Owner
+            </div>
+
+            <br />
             <button type="button" @onclick="CreateRoom">Create Room</button>
         </form>
     </Authorized>
@@ -30,7 +68,7 @@
 </AuthorizeView>
 
 <br />
-<InputCheckbox @bind-Value="FriendsOnly">Friends rooms</InputCheckbox>
+<InputCheckbox @bind-Value="FriendsOnly"/>Friends rooms
 <hr />
 @foreach (Data.Room room in DbContext.Rooms)
 {
@@ -58,6 +96,9 @@
 
     private ApplicationUser User { get; set; }
 
+    private PrioritySecurityLevel EnterRoomSecLevel = new PrioritySecurityLevel();
+    private PrioritySecurityLevel ControlRoomSecLevel = new PrioritySecurityLevel();
+
     protected override void OnInitialized()
     {
         var state = auth.GetAuthenticationStateAsync().Result;
@@ -68,7 +109,6 @@
                 .Include(u => u.Friendships)
                 .First(u => u.Id == claims.Id);
         }
-
         base.OnInitialized();
     }
 
@@ -82,6 +122,8 @@
 
         Data.Room newRoom = new Data.Room 
         { 
+			EnterRoomPrivacyLevel = EnterRoomSecLevel.ToPrivacyLevel(),
+			ControlRoomPrivacyLevel = ControlRoomSecLevel.ToPrivacyLevel(),
             Name = roomName,
             Owner = User,
             CreationDate = DateTime.Now
@@ -101,4 +143,94 @@
     {
         Navigation.NavigateTo($"/Room/{id}");
     }
+
+    class PrioritySecurityLevel
+    {
+        private bool _public;
+        public bool Public 
+        {
+            get => _public;
+            set 
+            {
+                _public = value;
+                _password = false;
+                _friends = false;
+                _list = false;
+                _owner = false;
+            }
+        }
+
+        private bool _password;
+        public bool Password 
+        {
+            get => _password;
+            set 
+            {
+                _public = false;
+                _password = value;
+                _friends = false;
+                _list = false;
+                _owner = false;
+            }
+        }
+
+        private bool _friends;
+        public bool Friends 
+        {
+            get => _friends;
+            set 
+            {
+                _public = false;
+                _password = false;
+                _friends = value;
+                _list = false;
+                _owner = false;
+            }
+        }
+
+        private bool _list;
+        public bool List 
+        {
+            get => _list;
+            set 
+            {
+                _public = false;
+                _password = false;
+                _friends = false;
+                _list = value;
+                _owner = false;
+            }
+        }
+
+        private bool _owner;
+        public bool Owner 
+        {
+            get => _owner;
+            set 
+            {
+                _public = false;
+                _password = false;
+                _friends = false;
+                _list = false;
+                _owner = value;
+            }
+        }
+
+        public PrivacyLevel ToPrivacyLevel()
+        {
+            if (Public) return PrivacyLevel.Public;
+            if (Password) return PrivacyLevel.Password;
+            if (Friends) return PrivacyLevel.Friends;
+            if (List) return PrivacyLevel.PrivateList;
+			if (Owner) return PrivacyLevel.Owner;
+
+			return PrivacyLevel.Public; // default
+        }
+    }
+
+    //TODO: Rooms access control(using friends system)
+    //TODO: Friends search
+    //TODO: Room search
+    //TODO: Saving videos without rooms (like simple video-hosting)
+    //TODO: Make it pretty
 }

@@ -12,14 +12,33 @@ namespace WatchTogether3.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            builder.Entity<Room>()
-                .HasOne<ApplicationUser>(r => r.Owner)
-                .WithMany(u => u.Rooms);
+            //builder.Entity<Room>()
+            //    .HasOne<ApplicationUser>(r => r.Owner)
+            //    .WithMany(u => u.Rooms);
+
+            builder.Entity<ApplicationUser>()
+                .HasMany<Room>(u => u.Rooms)
+                .WithOne(r => r.Owner);
 
             builder.Entity<Room>()
                 .HasMany<VideoFile>(r => r.UploadedVideos)
                 .WithOne(v => v.Room)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            //builder.Entity<Room>()
+            //    .HasMany<ApplicationUser>(r => r.AllowedToEnterUsers)
+            //    .WithMany()
+            //    .UsingEntity<Dictionary<string, object>>(
+            //        "ApplicationUserRoom",
+            //        j => j.HasOne<ApplicationUser>().WithMany().HasForeignKey("user"),
+            //        j => j.HasOne<Room>().WithMany().HasForeignKey("room"));
+            builder.Entity<Room>()
+                .HasMany<ApplicationUser>(r => r.AllowedToEnterUsers)
+                .WithMany();
+
+            builder.Entity<Room>()
+                .HasMany<ApplicationUser>(r => r.AllowedToControlUsers)
+                .WithMany();
 
 
             builder.Entity<Friendship>()

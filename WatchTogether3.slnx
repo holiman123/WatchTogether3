@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="../TestSQL/TestSQL.csproj" Id="f5dfc50d-fe3d-485a-a68f-6d8f7b30decf" />
+  <Project Path="../TestSQL2/TestSQL2.csproj" Id="ffb6c51e-6938-4711-8de1-d7bec88ddfb9" />
   <Project Path="WatchTogether3.csproj" />
 </Solution>

@@ -12,8 +12,8 @@ using WatchTogether3.Data;
 namespace WatchTogether3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260309170200_mssql.local_migration_811")]
-    partial class mssqllocal_migration_811
+    [Migration("20260315200521_mssql.local_migration_593")]
+    partial class mssqllocal_migration_593
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,36 @@ namespace WatchTogether3.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("ApplicationUserRoom", b =>
+                {
+                    b.Property<string>("AllowedToEnterUsersId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AllowedToEnterUsersId", "RoomId");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("ApplicationUserRoom");
+                });
+
+            modelBuilder.Entity("ApplicationUserRoom1", b =>
+                {
+                    b.Property<string>("AllowedToControlUsersId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Room1Id")
+                        .HasColumnType("int");
+
+                    b.HasKey("AllowedToControlUsersId", "Room1Id");
+
+                    b.HasIndex("Room1Id");
+
+                    b.ToTable("ApplicationUserRoom1");
+                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
@@ -282,10 +312,16 @@ namespace WatchTogether3.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("ControlRoomPrivacyLevel")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int?>("CurrentVideoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EnterRoomPrivacyLevel")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -293,7 +329,6 @@ namespace WatchTogether3.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("OwnerId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
@@ -352,6 +387,36 @@ namespace WatchTogether3.Migrations
                     b.HasIndex("RoomId");
 
                     b.ToTable("Videos");
+                });
+
+            modelBuilder.Entity("ApplicationUserRoom", b =>
+                {
+                    b.HasOne("WatchTogether3.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("AllowedToEnterUsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WatchTogether3.Data.Room", null)
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ApplicationUserRoom1", b =>
+                {
+                    b.HasOne("WatchTogether3.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("AllowedToControlUsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WatchTogether3.Data.Room", null)
+                        .WithMany()
+                        .HasForeignKey("Room1Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -479,9 +544,7 @@ namespace WatchTogether3.Migrations
 
                     b.HasOne("WatchTogether3.Data.ApplicationUser", "Owner")
                         .WithMany("Rooms")
-                        .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("OwnerId");
 
                     b.Navigation("CurrentVideo");
 
