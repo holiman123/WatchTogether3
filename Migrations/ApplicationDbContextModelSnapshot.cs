@@ -321,6 +321,10 @@ namespace WatchTogether3.Migrations
                     b.Property<int>("EnterRoomPrivacyLevel")
                         .HasColumnType("int");
 
+                    b.Property<string>("HashedPassword")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

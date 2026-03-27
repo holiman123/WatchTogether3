@@ -6,17 +6,20 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using WatchTogether3.Data
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 
 @inject NavigationManager Navigation
 @inject ApplicationDbContext DbContext
 @inject AuthenticationStateProvider auth
 @inject UserManager<ApplicationUser> userManager
+@inject SignInManager<ApplicationUser> signInManager
+@inject ProtectedSessionStorage sessionStorage
 
 <PageTitle>Home</PageTitle>
 
 <AuthorizeView>
     <Authorized>
-        <p>Create room:</p>
+        <h2>Create room</h2>
         <form>
             <label for="roomName">Room Name:</label>
             <input type="text" id="roomName" name="roomName" @bind="roomName" />
@@ -58,18 +61,26 @@
                 Owner
             </div>
 
+            @if(EnterRoomSecLevel.Password)
+            {
+                <label for="roomPassword">Room enter Password:</label>
+                <InputText type="password" @bind-Value="roomPassword" name="roomPassword" />
+			}
+
             <br />
             <button type="button" @onclick="CreateRoom">Create Room</button>
         </form>
+
+        <br />
+        <InputCheckbox @bind-Value="FriendsOnly" />Friends rooms
+        <hr />
+
     </Authorized>
     <NotAuthorized>
         <NavLink href="Account/Login">Login</NavLink>
     </NotAuthorized>
 </AuthorizeView>
 
-<br />
-<InputCheckbox @bind-Value="FriendsOnly"/>Friends rooms
-<hr />
 @foreach (Data.Room room in DbContext.Rooms)
 {
     if (!FriendsOnly || (User is not null && User.Friendships
@@ -80,7 +91,14 @@
         <p>@room.Name</p>
         <p>by @room.Owner.UserName</p>
         <p>watching @room.CurrentVideo</p>
-        <button @onclick="() => GoToRoom(room.Id)">Join Room</button>
+        @if (room.EnterRoomPrivacyLevel == PrivacyLevel.Password)
+        {
+            if (!PasswordInputs.ContainsKey(room.Id))
+                PasswordInputs[room.Id] = "";
+            <input @bind="PasswordInputs[room.Id]"/>
+            @* <InputText type="password" @bind-Value="PasswordInputs[room.Id]" name="roomPassword" placeholder="Enter room password" /> *@
+        }
+        <button @onclick="() => GoToRoom(room, PasswordInputs[room.Id])">Join Room</button>
         <hr />
     }
 }
@@ -90,6 +108,8 @@
 </script>
 
 @code {
+    private Dictionary<int, string> PasswordInputs { get; set; } = new Dictionary<int, string>();
+
     private bool FriendsOnly { get; set; } = false;
 
     private string roomName = string.Empty;
@@ -99,16 +119,34 @@
     private PrioritySecurityLevel EnterRoomSecLevel = new PrioritySecurityLevel();
     private PrioritySecurityLevel ControlRoomSecLevel = new PrioritySecurityLevel();
 
+    // TODO: Check if password transfered securelya (Now it uses only HTTPS encryption)
+    private string roomPassword = string.Empty;
+
+    private PasswordHasher<Data.Room> hasher = new PasswordHasher<Data.Room>();
+
     protected override void OnInitialized()
     {
+        // foreach(Data.Room room in DbContext.Rooms.Where(r => r.EnterRoomPrivacyLevel == PrivacyLevel.Password))
+        // {
+        //     PasswordInputs[room.Id] = "";
+        // }
+
         var state = auth.GetAuthenticationStateAsync().Result;
-        var claims = userManager.GetUserAsync(state.User).Result;
-        if (claims is not null)
+        if (state is not null)
         {
-            User = DbContext.Users
-                .Include(u => u.Friendships)
-                .First(u => u.Id == claims.Id);
+            var claims = userManager.GetUserAsync(state.User).Result;
+            if (claims is not null)
+            {
+                User = DbContext.Users
+                    .Include(u => u.Friendships)
+                    .First(u => u.Id == claims.Id);
+            }
+            else
+            {
+                signInManager.SignOutAsync();
+            }
         }
+
         base.OnInitialized();
     }
 
@@ -129,6 +167,9 @@
             CreationDate = DateTime.Now
         };
 
+        if (EnterRoomSecLevel.Password)
+            newRoom.HashedPassword = hasher.HashPassword(newRoom, roomPassword);
+
         if(DbContext.Rooms.Contains(newRoom))
             return;
 
@@ -136,12 +177,23 @@
 
         DbContext.SaveChanges();
 
-        GoToRoom(newRoom.Id);
+        GoToRoom(newRoom, roomPassword);
     }
 
-    private void GoToRoom(int id)
+    private void GoToRoom(Data.Room room, string? password = null)
     {
-        Navigation.NavigateTo($"/Room/{id}");
+        if (password is null)
+        {
+            Navigation.NavigateTo($"/Room/{room.Id}");
+        }
+        else
+        {
+            if (hasher.VerifyHashedPassword(room, room.HashedPassword, password) == PasswordVerificationResult.Success)
+            {
+                sessionStorage.SetAsync("password_hash", room.HashedPassword);
+                Navigation.NavigateTo($"/Room/{room.Id}");
+            }
+        }
     }
 
     class PrioritySecurityLevel
@@ -229,6 +281,7 @@
     }
 
     //TODO: Rooms access control(using friends system)
+    //TODO: Make it so after confirming email it signs in automaticly
     //TODO: Friends search
     //TODO: Room search
     //TODO: Saving videos without rooms (like simple video-hosting)

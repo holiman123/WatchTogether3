@@ -29,6 +29,8 @@ public class Room
     public List<ApplicationUser> AllowedToEnterUsers { get; set; } = new List<ApplicationUser>();
     public List<ApplicationUser> AllowedToControlUsers { get; set; } = new List<ApplicationUser>();
 
+    public string HashedPassword { get; set; } = string.Empty;
+
     public override bool Equals(object? obj)
     {
         return obj is Room room &&

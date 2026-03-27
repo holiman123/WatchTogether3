@@ -10,6 +10,7 @@
 @using System.Security.Claims
 @using System.Text.Json.Serialization
 @using WatchTogether3.Data
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
@@ -17,73 +18,92 @@
 @inject AuthenticationStateProvider authState
 @inject UserManager<ApplicationUser> userManager
 @inject RoomsParticipantsService RoomsParticipants
+@inject ProtectedSessionStorage sessionStorage
 
-<PageTitle>Room @RoomData.Name</PageTitle>
-
-<h1>@RoomData.Owner?.UserName 's room</h1>
-
-<hr>
-
-<InputFile id="fileUpload" OnChange="LoadFile" style="display:none" />
-
-@foreach(VideoFile video in RoomData.UploadedVideos.OrderBy(v => v.Order))
+@if (isLoaded)
 {
-    <button @onclick="() => ChangeVideo(video)">@video.FriendlyName</button>
-    <textarea @bind="tempNewVideoName" />
-    <button @onclick="() => RenameVideo(video, tempNewVideoName)">Rename</button>
-    <button @onclick="() => RemoveVideo(video)">X</button>
-    <button @onclick="() => MoveVideoUp(video)">↑</button>
-    <button @onclick="() => MoveVideoDown(video)">↓</button>
-    <br />
-}
-@if (progress is null)
-{
-    <label for="fileUpload">+</label>
-}
-else
-{
-    <label>Uploading: @progress.Value.ToString("0.00")%</label>
-    <button @onclick="() => FileUploadCTS.Cancel()">X</button>
-}
+    @if (RoomData.EnterRoomPrivacyLevel != PrivacyLevel.Password || password_hash == RoomData.HashedPassword)
+    {
+        <PageTitle>Room @RoomData.Name</PageTitle>
 
-<br />
-<br/>
+        <h1>@RoomData.Owner?.UserName 's room</h1>
+
+        <hr>
+
+        <InputFile id="fileUpload" OnChange="LoadFile" style="display:none" />
+
+        @foreach (VideoFile video in RoomData.UploadedVideos.OrderBy(v => v.Order))
+        {
+            <button @onclick="() => ChangeVideo(video)">@video.FriendlyName</button>
+            <textarea @bind="tempNewVideoName" />
+            <button @onclick="() => RenameVideo(video, tempNewVideoName)">Rename</button>
+            <button @onclick="() => RemoveVideo(video)">X</button>
+            <button @onclick="() => MoveVideoUp(video)">↑</button>
+            <button @onclick="() => MoveVideoDown(video)">↓</button>
+            <br />
+        }
+        @if (progress is null)
+        {
+            <label for="fileUpload">+</label>
+        }
+        else
+        {
+            <label>Uploading: @progress.Value.ToString("0.00")%</label>
+            <button @onclick="() => FileUploadCTS.Cancel()">X</button>
+        }
+
+        <br />
+        <br/>
 
 
-<video width="320" height="240" id="video_comp"
+        <video width="320" height="240" id="video_comp"
         onpause="OnPauseClick()"
         onplay="OnProceedClick()"
         onseeked="OnSeekClick()"
         src="@RoomData.CurrentVideo?.Url"
         >
-    @* @if (RoomData.CurrentVideo is not null)
+            @* @if (RoomData.CurrentVideo is not null)
     {
         <source src="@RoomData.CurrentVideo.Url" type="video/mp4">
     } *@
-    Your browser does not support the video tag.
-</video>
-<button id="play_btn" style="visibility: hidden" onclick="requestInitVideo()">Play</button>
+            Your browser does not support the video tag.
+        </video>
+        <button id="play_btn" style="visibility: hidden" onclick="requestInitVideo()">Play</button>
 
-<hr>
+        <hr>
 
-@if (User is not null && User.Id == RoomData.Owner.Id)
-{
-    <button @onclick="RemoveRoom">Remove room</button>
-}
-
-@if (RoomsParticipants.ContainsKey(roomId))
-{
-    foreach (ApplicationUser participant in RoomsParticipants[roomId])
-    {
-        if (participant is not null)
+        @if (User is not null && User.Id == RoomData.Owner.Id)
         {
-            <p>@participant.UserName</p>
+            <button @onclick="RemoveRoom">Remove room</button>
         }
-        else
+
+        @if (RoomsParticipants.ContainsKey(roomId))
         {
-            <p>Guest</p>
+            foreach (ApplicationUser participant in RoomsParticipants[roomId])
+            {
+                if (participant is not null)
+                {
+                    <p>@participant.UserName</p>
+                }
+                else
+                {
+                    <p>Guest</p>
+                }
+            }
         }
     }
+    else
+    {
+        <h1>RESTRICTED ACCESS YOU FOOL!</h1>
+    }
+}
+else
+{
+    <h1>Loading...</h1>
+    @* <PageTitle>Room @RoomData.Name - Password</PageTitle>
+    <h1>Enter password to access @RoomData.Name</h1>
+    <InputText type="password" @bind-Value="RoomPasswordStatus.Password" name="roomPassword" placeholder="Enter room password" />
+    <button @onclick="() => RoomPasswordStatus.IsLoggedIn = true">Enter</button> *@
 }
 
 <script>
@@ -93,13 +113,8 @@ else
         SeekVideo: 2
     });
 
-    var video = document.getElementById("video_comp");
     var DoSendAction = true;
-
-    video.addEventListener('loadedmetadata', () => {
-        console.log('Video metadata loaded. Requesting video init');
-        requestInitVideo();
-    });
+    var video;
 
     function requestInitVideo()
     {
@@ -120,6 +135,17 @@ else
     {
         video.src = "";
         video.load();
+    }
+
+    function onLoadedByServer()
+    {
+        video = document.getElementById("video_comp");
+        console.log(video);
+
+        video.addEventListener('loadedmetadata', () => {
+            console.log('Video metadata loaded. Requesting video init');
+            requestInitVideo();
+        });
     }
 
     async function initVideo(time, isPlay) {
@@ -248,7 +274,9 @@ else
 
     private HubConnection hub;
 
-    //private bool isActionReceivable = true;
+    private string password_hash;
+
+    private bool isLoaded = false;
 
     [Parameter]
     public int roomId { get; set; }
@@ -278,18 +306,22 @@ else
         base.OnInitialized();
     }
 
-    protected override void OnAfterRender(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            isLoaded = true;
+
+            password_hash = (await sessionStorage.GetAsync<string>("password_hash")).Value;
+
             var lDotNetReference = DotNetObjectReference.Create(this);
             JS.InvokeVoidAsync("setDotnetReference", lDotNetReference);
 
             string hubUri = Navigation.ToAbsoluteUri("/videohub").AbsoluteUri;
             HubConnectionBuilder hubBuilder = new HubConnectionBuilder();
-            #if DEBUG
+#if DEBUG
             hubBuilder.ConfigureLogging(opt => opt.SetMinimumLevel(LogLevel.Trace).AddConsole());
-            #endif
+#endif
             hub = hubBuilder.WithUrl(hubUri)
             .AddJsonProtocol(opt => opt.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)
             .Build();
@@ -336,44 +368,6 @@ else
                     //InitVideo();
                 }
             });
-            // hub.On("VideoUploadedFromHub", (VideoFile video) =>
-            // {
-            //     RoomData.CurrentVideo = video;
-            //     RoomData.UploadedVideos.Add(video);
-
-            //     DbContext.ChangeTracker.Clear();
-            //     InvokeAsync(StateHasChanged);
-            // });
-            // hub.On("VideoChangedFromHub", (VideoFile video) =>
-            // {
-            //     RoomData.CurrentVideo = video;
-
-            //     DbContext.ChangeTracker.Clear();
-            //     InvokeAsync(StateHasChanged);
-            // });
-            // hub.On("VideoRenamedFromHub", (VideoFile video) =>
-            // {
-            //     var localVideo = RoomData.UploadedVideos.FirstOrDefault(v => v.Id == video.Id);
-            //     if (localVideo is not null)
-            //     {
-            //         localVideo.FriendlyName = video.FriendlyName;
-            //     }
-            //     DbContext.ChangeTracker.Clear();
-            //     InvokeAsync(StateHasChanged);
-            // });
-            // hub.On("VideoRemovedFromHub", (VideoFile video) =>
-            // {
-            //     RoomData.UploadedVideos.Remove(video);
-
-            //     if (video == RoomData.CurrentVideo)
-            //     {
-            //         RoomData.CurrentVideo = null;
-            //         JS.InvokeVoidAsync("clearVideo");
-            //     }
-
-            //     DbContext.ChangeTracker.Clear();
-            //     InvokeAsync(StateHasChanged);
-            // });
 
             hub.StartAsync().Wait();
 
@@ -385,13 +379,9 @@ else
             else
                 hub.InvokeAsync("EnterRoom", roomId, String.Empty).Wait();
 
-
-            //InitVideo();
-
             InvokeAsync(StateHasChanged);
+            JS.InvokeVoidAsync("onLoadedByServer");
         }
-
-        base.OnAfterRender(firstRender);
     }
 
     [JSInvokable]

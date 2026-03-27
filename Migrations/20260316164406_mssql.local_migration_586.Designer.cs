@@ -12,8 +12,8 @@ using WatchTogether3.Data;
 namespace WatchTogether3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260315200521_mssql.local_migration_593")]
-    partial class mssqllocal_migration_593
+    [Migration("20260316164406_mssql.local_migration_586")]
+    partial class mssqllocal_migration_586
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -323,6 +323,10 @@ namespace WatchTogether3.Migrations
 
                     b.Property<int>("EnterRoomPrivacyLevel")
                         .HasColumnType("int");
+
+                    b.Property<string>("HashedPassword")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
