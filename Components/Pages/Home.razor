@@ -19,58 +19,8 @@
 
 <AuthorizeView>
     <Authorized>
-        <h2>Create room</h2>
-        <form>
-            <label for="roomName">Room Name:</label>
-            <input type="text" id="roomName" name="roomName" @bind="roomName" />
-            <br />
-
-            <div>
-                <p>Join room privacy</p>
-			    <InputCheckbox @bind-Value="EnterRoomSecLevel.Public"/>
-                Public
-                <br/>
-                <InputCheckbox @bind-Value="EnterRoomSecLevel.Password"  />
-                Password
-                <br />
-                <InputCheckbox @bind-Value="EnterRoomSecLevel.Friends"  />
-                Friends
-                <br />
-                <InputCheckbox @bind-Value="EnterRoomSecLevel.List"  />
-                List
-                <br />
-                <InputCheckbox @bind-Value="EnterRoomSecLevel.Owner"  />
-                Owner
-            </div>
-
-            <div>
-                <p>Control room privacy</p>
-                <InputCheckbox @bind-Value="ControlRoomSecLevel.Public" />
-                Public
-                <br />
-                <InputCheckbox @bind-Value="ControlRoomSecLevel.Password" />
-                Password
-                <br />
-                <InputCheckbox @bind-Value="ControlRoomSecLevel.Friends" />
-                Friends
-                <br />
-                <InputCheckbox @bind-Value="ControlRoomSecLevel.List" />
-                List
-                <br />
-                <InputCheckbox @bind-Value="ControlRoomSecLevel.Owner" />
-                Owner
-            </div>
-
-            @if(EnterRoomSecLevel.Password)
-            {
-                <label for="roomPassword">Room enter Password:</label>
-                <InputText type="password" @bind-Value="roomPassword" name="roomPassword" />
-			}
-
-            <br />
-            <button type="button" @onclick="CreateRoom">Create Room</button>
-        </form>
-
+        <br />
+        <NavLink class="btn btn-primary" href="/CreateRoom">Create Room</NavLink>
         <br />
         <InputCheckbox @bind-Value="FriendsOnly" />Friends rooms
         <hr />
@@ -122,15 +72,7 @@
 
     private bool FriendsOnly { get; set; } = false;
 
-    private string roomName = string.Empty;
-
     private ApplicationUser User { get; set; }
-
-    private PrioritySecurityLevel EnterRoomSecLevel = new PrioritySecurityLevel();
-    private PrioritySecurityLevel ControlRoomSecLevel = new PrioritySecurityLevel();
-
-    // TODO: Check if password transfered securely (Now it uses only HTTPS encryption)
-    private string roomPassword = string.Empty;
 
     private PasswordHasher<Data.Room> hasher = new PasswordHasher<Data.Room>();
 
@@ -155,36 +97,6 @@
         }
 
         base.OnInitialized();
-    }
-
-    private void CreateRoom()
-    {
-        if (roomName == string.Empty)
-            return;
-
-        if (User is null)
-            return;
-
-        Data.Room newRoom = new Data.Room 
-        { 
-			EnterRoomPrivacyLevel = EnterRoomSecLevel.ToPrivacyLevel(),
-			ControlRoomPrivacyLevel = ControlRoomSecLevel.ToPrivacyLevel(),
-            Name = roomName,
-            Owner = User,
-            CreationDate = DateTime.Now
-        };
-
-        if (EnterRoomSecLevel.Password)
-            newRoom.HashedPassword = hasher.HashPassword(newRoom, roomPassword);
-
-        if(DbContext.Rooms.Contains(newRoom))
-            return;
-
-        DbContext.Rooms.Add(newRoom);
-
-        DbContext.SaveChanges();
-
-        GoToRoom(newRoom, roomPassword);
     }
 
     private void GoToRoom(Data.Room room, string? password = null)
@@ -221,99 +133,10 @@
 		InvokeAsync(StateHasChanged);
 	}
 
-    class PrioritySecurityLevel
-    {
-        private bool _public;
-        public bool Public 
-        {
-            get => _public;
-            set 
-            {
-                _public = value;
-                _password = false;
-                _friends = false;
-                _list = false;
-                _owner = false;
-            }
-        }
-
-        private bool _password;
-        public bool Password 
-        {
-            get => _password;
-            set 
-            {
-                _public = false;
-                _password = value;
-                _friends = false;
-                _list = false;
-                _owner = false;
-            }
-        }
-
-        private bool _friends;
-        public bool Friends 
-        {
-            get => _friends;
-            set 
-            {
-                _public = false;
-                _password = false;
-                _friends = value;
-                _list = false;
-                _owner = false;
-            }
-        }
-
-        private bool _list;
-        public bool List 
-        {
-            get => _list;
-            set 
-            {
-                _public = false;
-                _password = false;
-                _friends = false;
-                _list = value;
-                _owner = false;
-            }
-        }
-
-        private bool _owner;
-        public bool Owner 
-        {
-            get => _owner;
-            set 
-            {
-                _public = false;
-                _password = false;
-                _friends = false;
-                _list = false;
-                _owner = value;
-            }
-        }
-
-        public PrioritySecurityLevel()
-        {
-            Public = true; // default
-		}
-
-        public PrivacyLevel ToPrivacyLevel()
-        {
-            if (Public) return PrivacyLevel.Public;
-            if (Password) return PrivacyLevel.Password;
-            if (Friends) return PrivacyLevel.Friends;
-            if (List) return PrivacyLevel.PrivateList;
-			if (Owner) return PrivacyLevel.Owner;
-
-			return PrivacyLevel.Public; // default
-        }
-    }
-
     // TODO: Rooms access control(using friends system) +
     // TODO: Make it so after confirming email it signs in automaticly -
     // TODO: Friends search +
-    // TODO: Room search
+    // TODO: Room search +
     // TODO: Saving videos without rooms (like simple video-hosting)
     // TODO: Make it pretty
     // TODO: Reilize rooms access by private list

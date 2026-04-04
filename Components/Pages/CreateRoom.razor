@@ -1,0 +1,229 @@
+﻿@page "/CreateRoom"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using WatchTogether3.Data
+
+@inject ApplicationDbContext DbContext
+@inject AuthenticationStateProvider authState
+@inject UserManager<ApplicationUser> userManager
+@inject NavigationManager Navigation
+@inject ProtectedSessionStorage sessionStorage
+
+<h3>CreateRoom</h3>
+
+<AuthorizeView>
+    <Authorized>
+        <form>
+            <label for="roomName">Room Name:</label>
+            <input type="text" id="roomName" name="roomName" @bind="roomName" />
+            <br />
+
+            <div>
+                <p>Join room privacy</p>
+                <InputCheckbox @bind-Value="EnterRoomSecLevel.Public" />
+                Public
+                <br />
+                <InputCheckbox @bind-Value="EnterRoomSecLevel.Password" />
+                Password
+                <br />
+                <InputCheckbox @bind-Value="EnterRoomSecLevel.Friends" />
+                Friends
+                <br />
+                <InputCheckbox @bind-Value="EnterRoomSecLevel.List" />
+                List
+                <br />
+                <InputCheckbox @bind-Value="EnterRoomSecLevel.Owner" />
+                Owner
+            </div>
+
+            <div>
+                <p>Control room privacy</p>
+                <InputCheckbox @bind-Value="ControlRoomSecLevel.Public" />
+                Public
+                <br />
+                <InputCheckbox @bind-Value="ControlRoomSecLevel.Password" />
+                Password
+                <br />
+                <InputCheckbox @bind-Value="ControlRoomSecLevel.Friends" />
+                Friends
+                <br />
+                <InputCheckbox @bind-Value="ControlRoomSecLevel.List" />
+                List
+                <br />
+                <InputCheckbox @bind-Value="ControlRoomSecLevel.Owner" />
+                Owner
+            </div>
+
+            @if (EnterRoomSecLevel.Password)
+            {
+                <label for="roomPassword">Room enter Password:</label>
+                <InputText type="password" @bind-Value="roomPassword" name="roomPassword" />
+            }
+
+            <br />
+            <button type="button" @onclick="CreateNewRoom">Create Room</button>
+        </form>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+
+    private ApplicationUser User { get; set; }
+
+    private string roomName = string.Empty;
+
+    private string roomPassword = string.Empty;
+
+    private PrioritySecurityLevel EnterRoomSecLevel = new PrioritySecurityLevel();
+    private PrioritySecurityLevel ControlRoomSecLevel = new PrioritySecurityLevel();
+
+    private PasswordHasher<Data.Room> hasher = new PasswordHasher<Data.Room>();
+
+    protected override void OnInitialized()
+    {
+        var claims = authState.GetAuthenticationStateAsync().Result.User;
+        User = userManager.GetUserAsync(claims).Result;
+	}
+
+    private void CreateNewRoom()
+    {
+        if (roomName == string.Empty)
+            return;
+
+        if (User is null)
+            return;
+
+        Data.Room newRoom = new Data.Room
+        {
+            EnterRoomPrivacyLevel = EnterRoomSecLevel.ToPrivacyLevel(),
+            ControlRoomPrivacyLevel = ControlRoomSecLevel.ToPrivacyLevel(),
+            Name = roomName,
+            Owner = User,
+            CreationDate = DateTime.Now
+        };
+
+        if (EnterRoomSecLevel.Password)
+            newRoom.HashedPassword = hasher.HashPassword(newRoom, roomPassword);
+
+        if (DbContext.Rooms.Contains(newRoom))
+            return;
+
+        DbContext.Rooms.Add(newRoom);
+
+        DbContext.SaveChanges();
+
+        GoToRoom(newRoom, roomPassword);
+    }
+
+    private void GoToRoom(Data.Room room, string? password = null)
+    {
+        if (password is null)
+        {
+            Navigation.NavigateTo($"/Room/{room.Id}");
+        }
+        else
+        {
+            if (User == room.Owner)
+            {
+                Navigation.NavigateTo($"/Room/{room.Id}");
+            }
+            else if (hasher.VerifyHashedPassword(room, room.HashedPassword, password) == PasswordVerificationResult.Success)
+            {
+                sessionStorage.SetAsync("password_hash", room.HashedPassword);
+                Navigation.NavigateTo($"/Room/{room.Id}");
+            }
+        }
+    }
+
+    class PrioritySecurityLevel
+    {
+        private bool _public;
+        public bool Public
+        {
+            get => _public;
+            set
+            {
+                _public = value;
+                _password = false;
+                _friends = false;
+                _list = false;
+                _owner = false;
+            }
+        }
+
+        private bool _password;
+        public bool Password
+        {
+            get => _password;
+            set
+            {
+                _public = false;
+                _password = value;
+                _friends = false;
+                _list = false;
+                _owner = false;
+            }
+        }
+
+        private bool _friends;
+        public bool Friends
+        {
+            get => _friends;
+            set
+            {
+                _public = false;
+                _password = false;
+                _friends = value;
+                _list = false;
+                _owner = false;
+            }
+        }
+
+        private bool _list;
+        public bool List
+        {
+            get => _list;
+            set
+            {
+                _public = false;
+                _password = false;
+                _friends = false;
+                _list = value;
+                _owner = false;
+            }
+        }
+
+        private bool _owner;
+        public bool Owner
+        {
+            get => _owner;
+            set
+            {
+                _public = false;
+                _password = false;
+                _friends = false;
+                _list = false;
+                _owner = value;
+            }
+        }
+
+        public PrioritySecurityLevel()
+        {
+            Public = true; // default
+        }
+
+        public PrivacyLevel ToPrivacyLevel()
+        {
+            if (Public) return PrivacyLevel.Public;
+            if (Password) return PrivacyLevel.Password;
+            if (Friends) return PrivacyLevel.Friends;
+            if (List) return PrivacyLevel.PrivateList;
+            if (Owner) return PrivacyLevel.Owner;
+
+            return PrivacyLevel.Public; // default
+        }
+    }
+}
