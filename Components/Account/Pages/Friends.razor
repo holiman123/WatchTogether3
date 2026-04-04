@@ -32,11 +32,27 @@
         }
     </div>
 }
+<br/>
+<InputText @bind-Value="friendSearch" @oninput="(e) => { friendSearch = e.Value.ToString();  SearchFriends(); }"/>
+@if (friendsSearchResults is not null)
+{
+    @foreach (ApplicationUser friend in friendsSearchResults)
+    {
+        <div>
+            @friend.UserName
+            <button class="btn btn-primary" @onclick="() => {RequestFriendship(friend); SearchFriends();}">Add Friend</button>
+        </div>
+    }
+}
 
 @code {
     private string friendId { get; set; }
 
     private ApplicationUser User { get; set; }
+
+    private string friendSearch { get; set; }
+
+    private List<ApplicationUser> friendsSearchResults { get; set; }
 
     protected override void OnInitialized()
     {
@@ -46,15 +62,20 @@
         User = dbContext.Users.Include(u => u.Friendships).First(u => u.Id == tempUser.Id);
     }
 
-    private async Task RequestFriendship()
+    private async Task RequestFriendship(ApplicationUser? otherUser = null)
     {
         // TODO: make it FriendshipsManager
-        ApplicationUser otherUser = dbContext.Users.Include(u => u.Friendships).First(u => u.Id == friendId);
+        if (otherUser is null)
+        {
+            otherUser = dbContext.Users.FirstOrDefault(u => u.Id == friendId);
+        }
 
         if (otherUser == null || User.Friendships.Any(f => f.Friend.Id == otherUser.Id))
         {
             return;
         }
+
+        dbContext.Entry(otherUser).Collection(u => u.Friendships).Load();
 
         Friendship friendship = new Friendship
         {
@@ -97,11 +118,35 @@
     private async Task RemoveFriend(Friendship friendship)
     {
         // TODO: make it FriendshipsManager
+        dbContext.Entry(friendship.Friend).Collection(u => u.Friendships).Load();
         Friendship otherFriendship = friendship.Friend.Friendships.First(f => f.Friend == User);
 
         dbContext.Friends.Remove(friendship);
         dbContext.Friends.Remove(otherFriendship);
         dbContext.SaveChanges();
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SearchFriends()
+    {
+        if (friendSearch is null || friendSearch == string.Empty)
+        {
+            friendsSearchResults.Clear();
+        }
+        else
+        {
+            friendsSearchResults = dbContext.Users.Where(u => u.UserName.Contains(friendSearch)).ToList();
+
+            // Remove the current user from the search results
+            friendsSearchResults.RemoveAll(u => u.Id == User.Id);
+
+            // Remove users that are already friends or have pending friend requests
+            foreach (Friendship friendship in User.Friendships)
+            {
+                friendsSearchResults.RemoveAll(u => u.Id == friendship.Friend.Id);
+            }
+        }
 
         InvokeAsync(StateHasChanged);
     }
