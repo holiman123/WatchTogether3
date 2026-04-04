@@ -81,7 +81,9 @@
     </NotAuthorized>
 </AuthorizeView>
 
-@foreach (Data.Room room in DbContext.Rooms)
+<InputText @bind-Value="roomSearch" @oninput="(e) => { roomSearch = e.Value.ToString(); SearchRooms(); }"/>
+
+@foreach (Data.Room room in roomSearchResults)
 {
     if (!FriendsOnly || (User is not null && User.Friendships
                                 .Where(f => f.Status == FriendshipStatus.Accepted)
@@ -111,6 +113,11 @@
 </script>
 
 @code {
+
+    private string roomSearch { get; set; } = string.Empty;
+
+    private ICollection<Data.Room> roomSearchResults { get; set; }
+
     private Dictionary<int, string> PasswordInputs { get; set; } = new Dictionary<int, string>();
 
     private bool FriendsOnly { get; set; } = false;
@@ -122,17 +129,14 @@
     private PrioritySecurityLevel EnterRoomSecLevel = new PrioritySecurityLevel();
     private PrioritySecurityLevel ControlRoomSecLevel = new PrioritySecurityLevel();
 
-    // TODO: Check if password transfered securelya (Now it uses only HTTPS encryption)
+    // TODO: Check if password transfered securely (Now it uses only HTTPS encryption)
     private string roomPassword = string.Empty;
 
     private PasswordHasher<Data.Room> hasher = new PasswordHasher<Data.Room>();
 
     protected override void OnInitialized()
     {
-        // foreach(Data.Room room in DbContext.Rooms.Where(r => r.EnterRoomPrivacyLevel == PrivacyLevel.Password))
-        // {
-        //     PasswordInputs[room.Id] = "";
-        // }
+        roomSearchResults = DbContext.Rooms.Take(30).ToList();
 
         var state = auth.GetAuthenticationStateAsync().Result;
         if (state is not null)
@@ -202,6 +206,20 @@
             }
         }
     }
+
+    private void SearchRooms()
+    {
+        if (roomSearch == string.Empty)
+        {
+            roomSearchResults = DbContext.Rooms.Take(30).ToList();
+        }
+        else
+        {
+            roomSearchResults = DbContext.Rooms.Where(r => r.Name.Contains(roomSearch)).ToList();
+        }
+
+		InvokeAsync(StateHasChanged);
+	}
 
     class PrioritySecurityLevel
     {
@@ -275,6 +293,11 @@
             }
         }
 
+        public PrioritySecurityLevel()
+        {
+            Public = true; // default
+		}
+
         public PrivacyLevel ToPrivacyLevel()
         {
             if (Public) return PrivacyLevel.Public;
@@ -294,4 +317,5 @@
     // TODO: Saving videos without rooms (like simple video-hosting)
     // TODO: Make it pretty
     // TODO: Reilize rooms access by private list
+    // TODO: Create friendships manager
 }
