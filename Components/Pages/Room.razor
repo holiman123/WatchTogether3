@@ -12,6 +12,7 @@
 @using WatchTogether3.Data
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 
+
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 @inject ApplicationDbContext DbContext
@@ -20,90 +21,85 @@
 @inject RoomsParticipantsService RoomsParticipants
 @inject ProtectedSessionStorage sessionStorage
 
-@if (isLoaded)
+
+@if (roomViewState == RoomViewState.Loading)
 {
-    @if (RoomData.EnterRoomPrivacyLevel != PrivacyLevel.Password || password_hash == RoomData.HashedPassword)
+    <h1>Loading...</h1>
+}
+else if (roomViewState == RoomViewState.FullAccess)
+{
+    #region FullAccessView
+    <PageTitle>Room @RoomData.Name</PageTitle>
+
+    <h1>@RoomData.Owner?.UserName 's room</h1>
+
+    <hr>
+
+    <InputFile id="fileUpload" OnChange="LoadFile" style="display:none" />
+
+    @foreach (VideoFile video in RoomData.UploadedVideos.OrderBy(v => v.Order))
     {
-        <PageTitle>Room @RoomData.Name</PageTitle>
-
-        <h1>@RoomData.Owner?.UserName 's room</h1>
-
-        <hr>
-
-        <InputFile id="fileUpload" OnChange="LoadFile" style="display:none" />
-
-        @foreach (VideoFile video in RoomData.UploadedVideos.OrderBy(v => v.Order))
-        {
-            <button @onclick="() => ChangeVideo(video)">@video.FriendlyName</button>
-            <textarea @bind="tempNewVideoName" />
-            <button @onclick="() => RenameVideo(video, tempNewVideoName)">Rename</button>
-            <button @onclick="() => RemoveVideo(video)">X</button>
-            <button @onclick="() => MoveVideoUp(video)">↑</button>
-            <button @onclick="() => MoveVideoDown(video)">↓</button>
-            <br />
-        }
-        @if (progress is null)
-        {
-            <label for="fileUpload">+</label>
-        }
-        else
-        {
-            <label>Uploading: @progress.Value.ToString("0.00")%</label>
-            <button @onclick="() => FileUploadCTS.Cancel()">X</button>
-        }
-
+        <button @onclick="() => ChangeVideo(video)">@video.FriendlyName</button>
+        <textarea @bind="tempNewVideoName" />
+        <button @onclick="() => RenameVideo(video, tempNewVideoName)">Rename</button>
+        <button @onclick="() => RemoveVideo(video)">X</button>
+        <button @onclick="() => MoveVideoUp(video)">↑</button>
+        <button @onclick="() => MoveVideoDown(video)">↓</button>
         <br />
-        <br/>
-
-
-        <video width="320" height="240" id="video_comp"
-        onpause="OnPauseClick()"
-        onplay="OnProceedClick()"
-        onseeked="OnSeekClick()"
-        src="@RoomData.CurrentVideo?.Url"
-        >
-            @* @if (RoomData.CurrentVideo is not null)
+    }
+    @if (progress is null)
     {
-        <source src="@RoomData.CurrentVideo.Url" type="video/mp4">
-    } *@
-            Your browser does not support the video tag.
-        </video>
-        <button id="play_btn" style="visibility: hidden" onclick="requestInitVideo()">Play</button>
-
-        <hr>
-
-        @if (User is not null && User.Id == RoomData.Owner.Id)
-        {
-            <button @onclick="RemoveRoom">Remove room</button>
-        }
-
-        @if (RoomsParticipants.ContainsKey(roomId))
-        {
-            foreach (ApplicationUser participant in RoomsParticipants[roomId])
-            {
-                if (participant is not null)
-                {
-                    <p>@participant.UserName</p>
-                }
-                else
-                {
-                    <p>Guest</p>
-                }
-            }
-        }
+        <label for="fileUpload">+</label>
     }
     else
     {
-        <h1>RESTRICTED ACCESS YOU FOOL!</h1>
+        <label>Uploading: @progress.Value.ToString("0.00")%</label>
+        <button @onclick="() => FileUploadCTS.Cancel()">X</button>
     }
+
+    <br />
+    <br />
+
+
+    <video width="320" height="240" id="video_comp"
+           onpause="OnPauseClick()"
+           onplay="OnProceedClick()"
+           onseeked="OnSeekClick()"
+           src="@RoomData.CurrentVideo?.Url">
+        @* @if (RoomData.CurrentVideo is not null)
+    {
+        <source src="@RoomData.CurrentVideo.Url" type="video/mp4">
+    } *@
+        Your browser does not support the video tag.
+    </video>
+    <button id="play_btn" style="visibility: hidden" onclick="requestInitVideo()">Play</button>
+
+    <hr>
+
+    @if (User is not null && User.Id == RoomData?.Owner?.Id)
+    {
+        <button @onclick="RemoveRoom">Remove room</button>
+    }
+
+    @if (RoomsParticipants.ContainsKey(roomId))
+    {
+        foreach (ApplicationUser? participant in RoomsParticipants[roomId])
+        {
+            if (participant is not null)
+            {
+                <p>@participant.UserName</p>
+            }
+            else
+            {
+                <p>Guest</p>
+            }
+        }
+    }
+    #endregion 
 }
-else
+else if (roomViewState == RoomViewState.NoAccess)
 {
-    <h1>Loading...</h1>
-    @* <PageTitle>Room @RoomData.Name - Password</PageTitle>
-    <h1>Enter password to access @RoomData.Name</h1>
-    <InputText type="password" @bind-Value="RoomPasswordStatus.Password" name="roomPassword" placeholder="Enter room password" />
-    <button @onclick="() => RoomPasswordStatus.IsLoggedIn = true">Enter</button> *@
+	<h1>RESTRICTED ACCESS YOU FOOL!</h1>
 }
 
 <script>
@@ -270,16 +266,14 @@ else
 @code {
     //First time changing video, it is not set time correctly. This is because video is not fully loaded when correct time is applied
 
-    private double? progress;
-
-    private HubConnection hub;
-
-    private string password_hash;
-
-    private bool isLoaded = false;
-
     [Parameter]
     public int roomId { get; set; }
+
+    private RoomViewState roomViewState { get; set; } = RoomViewState.Loading;
+
+    private double? progress { get; set; } = null;
+
+    private HubConnection hub { get; set; }
 
     private ApplicationUser? User { get; set; }
 
@@ -300,6 +294,7 @@ else
         DbContext.ChangeTracker.Clear();
         if (DbContext.Rooms.Find(roomId) is Data.Room room)
         {
+            DbContext.Entry(room.Owner).Collection(o => o.Friendships).Load();
             RoomData = room;
         }
 
@@ -310,9 +305,38 @@ else
     {
         if (firstRender)
         {
-            isLoaded = true;
+            // Access stuff
+            if (User?.Id == RoomData.Owner.Id)
+            {
+                roomViewState = RoomViewState.FullAccess;
+            }
+            else if (RoomData.EnterRoomPrivacyLevel == PrivacyLevel.Public)
+            {
+                roomViewState = RoomViewState.FullAccess;
+            }
+            else if (RoomData.EnterRoomPrivacyLevel == PrivacyLevel.Owner)
+            {
+                if (User?.Id == RoomData.Owner.Id)
+					roomViewState = RoomViewState.FullAccess;
+                else
+					roomViewState = RoomViewState.NoAccess;
+            }
+            else if (RoomData.EnterRoomPrivacyLevel == PrivacyLevel.Password)
+            {
+                string? password_hash = (await sessionStorage.GetAsync<string>("password_hash")).Value;
 
-            password_hash = (await sessionStorage.GetAsync<string>("password_hash")).Value;
+                if (password_hash == RoomData.HashedPassword)
+                    roomViewState = RoomViewState.FullAccess;
+                else
+                    roomViewState = RoomViewState.NoAccess;
+            }
+            else if (RoomData.EnterRoomPrivacyLevel == PrivacyLevel.Friends)
+            {
+                if (RoomData.Owner.Friendships.Select(fr => fr.Friend?.Id).Contains(User?.Id))
+                    roomViewState = RoomViewState.FullAccess;
+                else
+                    roomViewState = RoomViewState.NoAccess;
+            }
 
             var lDotNetReference = DotNetObjectReference.Create(this);
             JS.InvokeVoidAsync("setDotnetReference", lDotNetReference);
@@ -628,5 +652,12 @@ else
         PauseVideo,
         ProceedVideo,
         SeekVideo
+    }
+
+    public enum RoomViewState
+    {
+        Loading,
+        FullAccess,
+		NoAccess
     }
 }

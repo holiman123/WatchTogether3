@@ -96,9 +96,12 @@
             if (!PasswordInputs.ContainsKey(room.Id))
                 PasswordInputs[room.Id] = "";
             <input @bind="PasswordInputs[room.Id]"/>
-            @* <InputText type="password" @bind-Value="PasswordInputs[room.Id]" name="roomPassword" placeholder="Enter room password" /> *@
+            <button @onclick="() => GoToRoom(room, PasswordInputs[room.Id])">Join Room</button>
         }
-        <button @onclick="() => GoToRoom(room, PasswordInputs[room.Id])">Join Room</button>
+        else
+        {
+            <button @onclick="() => GoToRoom(room)">Join Room</button>
+        }
         <hr />
     }
 }
@@ -188,7 +191,11 @@
         }
         else
         {
-            if (hasher.VerifyHashedPassword(room, room.HashedPassword, password) == PasswordVerificationResult.Success)
+            if (User == room.Owner)
+            {
+                Navigation.NavigateTo($"/Room/{room.Id}");
+            }
+            else if (hasher.VerifyHashedPassword(room, room.HashedPassword, password) == PasswordVerificationResult.Success)
             {
                 sessionStorage.SetAsync("password_hash", room.HashedPassword);
                 Navigation.NavigateTo($"/Room/{room.Id}");
@@ -280,10 +287,11 @@
         }
     }
 
-    //TODO: Rooms access control(using friends system)
-    //TODO: Make it so after confirming email it signs in automaticly
-    //TODO: Friends search
-    //TODO: Room search
-    //TODO: Saving videos without rooms (like simple video-hosting)
-    //TODO: Make it pretty
+    // TODO: Rooms access control(using friends system) +
+    // TODO: Make it so after confirming email it signs in automaticly -
+    // TODO: Friends search +
+    // TODO: Room search
+    // TODO: Saving videos without rooms (like simple video-hosting)
+    // TODO: Make it pretty
+    // TODO: Reilize rooms access by private list
 }
