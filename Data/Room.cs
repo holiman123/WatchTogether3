@@ -24,7 +24,8 @@ public class Room
     public DateTime CreationDate { get; set; }
 
     public PrivacyLevel EnterRoomPrivacyLevel { get; set; }
-    public PrivacyLevel ControlRoomPrivacyLevel { get; set; }
+    public PrivacyLevel ControlPlayerPrivacyLevel { get; set; }
+    public PrivacyLevel ControlVideoPrivacyLevel { get; set; }
 
     public List<ApplicationUser> AllowedToEnterUsers { get; set; } = new List<ApplicationUser>();
     public List<ApplicationUser> AllowedToControlUsers { get; set; } = new List<ApplicationUser>();

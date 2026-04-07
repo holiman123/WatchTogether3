@@ -40,20 +40,38 @@
             </div>
 
             <div>
-                <p>Control room privacy</p>
-                <InputCheckbox @bind-Value="ControlRoomSecLevel.Public" />
+                <p>Control video room privacy</p>
+                <InputCheckbox @bind-Value="ControlVideoSecLevel.Public" />
                 Public
                 <br />
-                <InputCheckbox @bind-Value="ControlRoomSecLevel.Password" />
+                <InputCheckbox @bind-Value="ControlVideoSecLevel.Password" />
                 Password
                 <br />
-                <InputCheckbox @bind-Value="ControlRoomSecLevel.Friends" />
+                <InputCheckbox @bind-Value="ControlVideoSecLevel.Friends" />
                 Friends
                 <br />
-                <InputCheckbox @bind-Value="ControlRoomSecLevel.List" />
+                <InputCheckbox @bind-Value="ControlVideoSecLevel.List" />
                 List
                 <br />
-                <InputCheckbox @bind-Value="ControlRoomSecLevel.Owner" />
+                <InputCheckbox @bind-Value="ControlVideoSecLevel.Owner" />
+                Owner
+            </div>
+
+            <div>
+                <p>Control player room privacy</p>
+                <InputCheckbox @bind-Value="ControlPlayerSecLevel.Public" />
+                Public
+                <br />
+                <InputCheckbox @bind-Value="ControlPlayerSecLevel.Password" />
+                Password
+                <br />
+                <InputCheckbox @bind-Value="ControlPlayerSecLevel.Friends" />
+                Friends
+                <br />
+                <InputCheckbox @bind-Value="ControlPlayerSecLevel.List" />
+                List
+                <br />
+                <InputCheckbox @bind-Value="ControlPlayerSecLevel.Owner" />
                 Owner
             </div>
 
@@ -78,7 +96,8 @@
     private string roomPassword = string.Empty;
 
     private PrioritySecurityLevel EnterRoomSecLevel = new PrioritySecurityLevel();
-    private PrioritySecurityLevel ControlRoomSecLevel = new PrioritySecurityLevel();
+    private PrioritySecurityLevel ControlPlayerSecLevel = new PrioritySecurityLevel();
+    private PrioritySecurityLevel ControlVideoSecLevel = new PrioritySecurityLevel();
 
     private PasswordHasher<Data.Room> hasher = new PasswordHasher<Data.Room>();
 
@@ -99,7 +118,8 @@
         Data.Room newRoom = new Data.Room
         {
             EnterRoomPrivacyLevel = EnterRoomSecLevel.ToPrivacyLevel(),
-            ControlRoomPrivacyLevel = ControlRoomSecLevel.ToPrivacyLevel(),
+            ControlVideoPrivacyLevel = ControlVideoSecLevel.ToPrivacyLevel(),
+			ControlPlayerPrivacyLevel = ControlPlayerSecLevel.ToPrivacyLevel(),
             Name = roomName,
             Owner = User,
             CreationDate = DateTime.Now
