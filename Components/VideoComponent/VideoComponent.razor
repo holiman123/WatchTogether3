@@ -1,0 +1,274 @@
+﻿@using System.Text.Json
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+<video width="320" height="240" id="video_comp"
+    controls
+    onpause="OnPauseClick()"
+    onplay="OnProceedClick()"
+    onseeked="OnSeekClick()"
+    src="@Url">
+        Your browser does not support the video tag.
+</video>
+<button id="play_btn" style="visibility: hidden" onclick="RequestVideoInit()">Play</button>
+
+<script>
+    var UserActions = Object.freeze({
+        ProceedVideo: 0,
+        PauseVideo: 1,
+        SeekVideo: 2
+    });
+
+    var DoSendAction = true;
+
+    // DotNet reference holder
+    var dnh = null;
+    function setDotnetReference(dotnetRef) {
+        console.log("received DNR");
+        dnh = dotnetRef;
+    }
+
+    function setVideoLoadedEvent() {
+        video = document.getElementById("video_comp");
+        video.addEventListener("loadedmetadata", function() {
+            console.log('Video metadata loaded. Requesting video init');
+            RequestVideoInit();
+        });
+	}
+
+    function RequestVideoInit() {
+        if (dnh) {
+            dnh.invokeMethodAsync("InitVideo");
+            play_btn.style.visibility = "hidden";
+        }
+    }
+
+    function ClearVideo() {
+        video.src = "";
+        video.load();
+    }
+
+    async function ProceedVideo() {
+        console.log("ProceedVideo");
+        DoSendAction = false;
+        await video.play();
+        DoSendAction = true;
+    }
+
+    async function PauseVideo(time) {
+        console.log("PauseVideo");
+        DoSendAction = false;
+        await video.pause();
+        await seekVideo(video, time);
+        DoSendAction = true;
+    }
+
+    async function SeekVideo(time) {
+        console.log("SeekVideo");
+        DoSendAction = false;
+        await seekVideo(video, time);
+        DoSendAction = true;
+    }
+
+
+    function OnProceedClick() {
+        SendAction(UserActions.ProceedVideo);
+    }
+    function OnPauseClick() {
+        SendAction(UserActions.PauseVideo, video.currentTime);
+    }
+    function OnSeekClick() {
+        SendAction(UserActions.SeekVideo, video.currentTime);
+    }
+
+    function SendAction(action, ...args) {
+        if (dnh == null || DoSendAction == false) {
+            console.log(dnh);
+            console.log(DoSendAction);
+            return;
+        }
+
+        dnh.invokeMethodAsync('ReceiveAction', action, args);
+        console.log("SendAction");
+        console.log(action);
+        console.log(args);
+    }
+
+    async function initVideo(time, isPlay, doShowControls) {
+        console.log("initVideo");
+        console.log(time);
+
+        DoSendAction = false;
+        console.log(await seekVideo(video, time));
+
+        if (isPlay) {
+            var promise = video.play();
+
+            if (promise !== undefined) {
+                promise.then(_ => {
+                    // Autoplay started!
+                    console.log("autoplay");
+                    video.setAttribute("controls", "");
+                }).catch(error => {
+                    // Autoplay was prevented.
+                    // Show a "Play" button so that user can start playback.
+                    console.log("no autoplay!");
+                    play_btn.style.visibility = "visible";
+                });
+            }
+        }
+        else {
+            video.setAttribute("controls", "");
+        }
+
+        DoSendAction = true;
+    }
+
+
+    function seekVideo(videoElement, timeInSeconds) {
+        if (timeInSeconds > videoElement.duration)
+            return false;
+        return new Promise((resolve, reject) => {
+            if (!(videoElement instanceof HTMLVideoElement)) {
+                reject(new Error("Invalid video element."));
+            }
+            if (typeof timeInSeconds !== "number" || timeInSeconds < 0) {
+                reject(new Error("Invalid seek time."));
+            }
+            if (videoElement.readyState < 1) {
+                // Wait until metadata is loaded to know duration
+                videoElement.addEventListener("loadedmetadata", () => {
+                    if (timeInSeconds > videoElement.duration) {
+                        reject(new Error("Seek time exceeds video duration."));
+                    }
+                    videoElement.currentTime = timeInSeconds;
+                }, { once: true });
+            } else {
+                if (timeInSeconds > videoElement.duration) {
+                    reject(new Error("Seek time exceeds video duration."));
+                }
+                videoElement.currentTime = timeInSeconds;
+            }
+
+            // Resolve when seeking is complete
+            videoElement.addEventListener("seeked", () => {
+                resolve(`Seeked to ${timeInSeconds} seconds`);
+            }, { once: true });
+
+            // Optional: handle seek errors
+            videoElement.addEventListener("error", () => {
+                reject(new Error("An error occurred while seeking."));
+            }, { once: true });
+        });
+    }
+
+</script>
+
+@code {
+    public delegate void VideoActionHandler(double time = 0);
+
+    [Parameter]
+    public string Url { get; set; }
+
+    [Parameter]
+    public bool IsPlayingWhenLoading { get; set;} = false;
+
+    [Parameter]
+    public bool ShowControls { get; set; } = true;
+
+    public event VideoActionHandler OnVideoProceed;
+    public event VideoActionHandler OnVideoPause;
+    public event VideoActionHandler OnVideoSeek;
+
+    /// <summary>
+    /// Maybe make it parameter
+    /// </summary>
+    private double initTime = 0;
+
+    public void Proceed()
+    {
+        JS.InvokeVoidAsync("ProceedVideo");
+    }
+
+    public void Pause(double time)
+    {
+        JS.InvokeVoidAsync("PauseVideo", time);
+    }
+
+    public void Seek(double time)
+    {
+        JS.InvokeVoidAsync("SeekVideo", time);
+    }
+
+    public void ClearSource()
+    {
+        JS.InvokeVoidAsync("ClearVideo");
+    }
+
+    /// <summary>
+    /// Initializes the video with the specified start time.
+    /// </summary>
+    /// <param name="time">The start time in seconds.</param>
+    public void InitVideo(double time)
+    {
+        initTime = time;
+
+        JS.InvokeVoidAsync("setVideoLoadedEvent");
+	}
+
+	[JSInvokable]
+    public void InitVideo()
+    {
+        JS.InvokeVoidAsync("initVideo", initTime, IsPlayingWhenLoading, ShowControls);
+	}
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var lDotNetReference = DotNetObjectReference.Create(this);
+            JS.InvokeVoidAsync("setDotnetReference", lDotNetReference);
+        }
+
+        base.OnAfterRender(firstRender);
+    }
+
+
+    /// <summary>
+    /// This method is called from JavaScript when a user interacts with the video element (play, pause, seek). <br/>
+    /// Please do not call this method from C#.
+    /// </summary>
+    /// <param name="actions"></param>
+    /// <param name="args"></param>
+    [JSInvokable]
+    public void ReceiveAction(UserActions2 actions, params JsonElement[] args)
+    {
+        switch (actions)
+        {
+            case UserActions2.ProceedVideo:
+                {
+                    OnVideoProceed?.Invoke();
+                    break;
+                }
+            case UserActions2.PauseVideo:
+                {
+                    double time = args[0].GetDouble();
+					OnVideoPause?.Invoke(time);
+                    break;
+                }
+            case UserActions2.SeekVideo:
+                {
+                    double time = args[0].GetDouble();
+					OnVideoSeek?.Invoke(time);
+                    break;
+                }
+        }
+    }
+
+    public enum UserActions2
+    {
+        ProceedVideo,
+        PauseVideo,
+        SeekVideo
+    }
+}

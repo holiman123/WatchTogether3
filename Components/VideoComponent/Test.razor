@@ -1,0 +1,84 @@
+﻿@page "/test"
+@rendermode InteractiveServer
+
+<br/>
+<div>
+	<VideoComponent @ref="videoComponent" Url="@url" IsPlayingWhenLoading="@isPlayingWhenLoading" ShowControls="@doShowControls" />
+
+	<br/>
+	<button @onclick="PlayButton">Play Video</button>
+	<br />
+	<button @onclick="PauseButton">Pause Video</button>
+	<br />
+	<button @onclick="SeekButton">Seek Video</button>
+	<br />
+	<button @onclick="Clear">Clear Video</button>
+	<br />
+	<button @onclick="ChangeUrl">Change Video</button>
+	<p>Current URL: @url</p>
+	<br/>
+	<InputCheckbox @bind-Value="isPlayingWhenLoading">Is playing by default</InputCheckbox>
+
+	<br />
+	<p>@lastAction</p>
+</div>
+
+@code {
+	private VideoComponent videoComponent { get; set; }
+	private string lastAction { get; set; }
+	private string url { get; set; } = "api/Videos/get/masha.mp4";
+	private bool isPlayingWhenLoading = true;
+	private bool doShowControls = true;
+
+	protected override void OnAfterRender(bool firstRender)
+	{
+		if (firstRender)
+		{
+			videoComponent.OnVideoProceed += (_) => 
+			{ 
+				lastAction = $"Video proceeded"; 
+				InvokeAsync(StateHasChanged); 
+			};
+			videoComponent.OnVideoPause += (time) => 
+			{ 
+				lastAction = $"Video paused at {time} seconds"; 
+				InvokeAsync(StateHasChanged); 
+			};
+			videoComponent.OnVideoSeek += (time) => 
+			{ 
+				lastAction = $"Video seeked to {time} seconds"; 
+				InvokeAsync(StateHasChanged); 
+			};
+
+			videoComponent.InitVideo(3);
+		}
+	}
+
+	private void PlayButton()
+	{
+		videoComponent.Proceed();
+	}
+
+	private void PauseButton()
+	{
+		videoComponent.Pause(1);
+	}
+
+	private void SeekButton()
+	{
+		videoComponent.Seek(2);
+	}
+
+	private void Clear()
+	{
+		videoComponent.ClearSource();
+	}
+
+	private void ChangeUrl()
+	{
+		if (url == "api/Videos/get/masha.mp4")
+			url = "api/Videos/get/masha2.mp4";
+		else
+			url = "api/Videos/get/masha.mp4";
+	}
+}

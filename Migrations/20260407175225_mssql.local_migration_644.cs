@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WatchTogether3.Migrations
 {
     /// <inheritdoc />
-    public partial class mssqllocal_migration_586 : Migration
+    public partial class mssqllocal_migration_644 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -250,7 +250,8 @@ namespace WatchTogether3.Migrations
                     OwnerId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EnterRoomPrivacyLevel = table.Column<int>(type: "int", nullable: false),
-                    ControlRoomPrivacyLevel = table.Column<int>(type: "int", nullable: false),
+                    ControlPlayerPrivacyLevel = table.Column<int>(type: "int", nullable: false),
+                    ControlVideoPrivacyLevel = table.Column<int>(type: "int", nullable: false),
                     HashedPassword = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>

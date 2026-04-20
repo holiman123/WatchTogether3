@@ -309,7 +309,10 @@ namespace WatchTogether3.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ControlRoomPrivacyLevel")
+                    b.Property<int>("ControlPlayerPrivacyLevel")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ControlVideoPrivacyLevel")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreationDate")

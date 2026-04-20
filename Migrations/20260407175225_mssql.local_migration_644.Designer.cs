@@ -12,8 +12,8 @@ using WatchTogether3.Data;
 namespace WatchTogether3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260316164406_mssql.local_migration_586")]
-    partial class mssqllocal_migration_586
+    [Migration("20260407175225_mssql.local_migration_644")]
+    partial class mssqllocal_migration_644
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -312,7 +312,10 @@ namespace WatchTogether3.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ControlRoomPrivacyLevel")
+                    b.Property<int>("ControlPlayerPrivacyLevel")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ControlVideoPrivacyLevel")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreationDate")
