@@ -176,14 +176,13 @@
     [Parameter]
     public bool ShowControls { get; set; } = true;
 
+    [Parameter]
+    public double TimeAtStart { get; set; } = 0;
+
     public event VideoActionHandler OnVideoProceed;
     public event VideoActionHandler OnVideoPause;
     public event VideoActionHandler OnVideoSeek;
 
-    /// <summary>
-    /// Maybe make it parameter
-    /// </summary>
-    private double initTime = 0;
 
     public void Proceed()
     {
@@ -205,21 +204,10 @@
         JS.InvokeVoidAsync("ClearVideo");
     }
 
-    /// <summary>
-    /// Initializes the video with the specified start time.
-    /// </summary>
-    /// <param name="time">The start time in seconds.</param>
-    public void InitVideo(double time)
-    {
-        initTime = time;
-
-        JS.InvokeVoidAsync("setVideoLoadedEvent");
-	}
-
 	[JSInvokable]
     public void InitVideo()
     {
-        JS.InvokeVoidAsync("initVideo", initTime, IsPlayingWhenLoading, ShowControls);
+        JS.InvokeVoidAsync("initVideo", TimeAtStart, IsPlayingWhenLoading, ShowControls);
 	}
 
     protected override void OnAfterRender(bool firstRender)
@@ -228,6 +216,8 @@
         {
             var lDotNetReference = DotNetObjectReference.Create(this);
             JS.InvokeVoidAsync("setDotnetReference", lDotNetReference);
+
+            JS.InvokeVoidAsync("setVideoLoadedEvent");
         }
 
         base.OnAfterRender(firstRender);

@@ -3,7 +3,12 @@
 
 <br/>
 <div>
-	<VideoComponent @ref="videoComponent" Url="@url" IsPlayingWhenLoading="@isPlayingWhenLoading" ShowControls="@doShowControls" />
+	<VideoComponent 
+		@ref="videoComponent" 
+		Url="@url" 
+		IsPlayingWhenLoading="@isPlayingWhenLoading" 
+		ShowControls="@doShowControls" 
+		TimeAtStart="@timeAtStart"/>
 
 	<br/>
 	<button @onclick="PlayButton">Play Video</button>
@@ -29,6 +34,7 @@
 	private string url { get; set; } = "api/Videos/get/masha.mp4";
 	private bool isPlayingWhenLoading = true;
 	private bool doShowControls = true;
+	private double timeAtStart = 3;
 
 	protected override void OnAfterRender(bool firstRender)
 	{
@@ -49,8 +55,6 @@
 				lastAction = $"Video seeked to {time} seconds"; 
 				InvokeAsync(StateHasChanged); 
 			};
-
-			videoComponent.InitVideo(3);
 		}
 	}
 
