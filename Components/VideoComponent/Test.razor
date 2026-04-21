@@ -5,10 +5,7 @@
 <div>
 	<VideoComponent 
 		@ref="videoComponent" 
-		Url="@url" 
-		IsPlayingWhenLoading="@isPlayingWhenLoading" 
-		ShowControls="@doShowControls" 
-		TimeAtStart="@timeAtStart"/>
+		Url="@url"/>
 
 	<br/>
 	<button @onclick="PlayButton">Play Video</button>
@@ -32,9 +29,8 @@
 	private VideoComponent videoComponent { get; set; }
 	private string lastAction { get; set; }
 	private string url { get; set; } = "api/Videos/get/masha.mp4";
-	private bool isPlayingWhenLoading = true;
-	private bool doShowControls = true;
-	private double timeAtStart = 3;
+	private TestClass testClass { get; set; } = null;
+	private bool isPlayingWhenLoading { get; set; } = false;
 
 	protected override void OnAfterRender(bool firstRender)
 	{
@@ -55,6 +51,10 @@
 				lastAction = $"Video seeked to {time} seconds"; 
 				InvokeAsync(StateHasChanged); 
 			};
+
+			testClass = new TestClass(isPlayingWhenLoading, true, 3);
+
+			videoComponent.InitVideo(testClass.StartTime, testClass.IsPlayingWhenLoading, testClass.DoShowControls);
 		}
 	}
 
@@ -84,5 +84,19 @@
 			url = "api/Videos/get/masha2.mp4";
 		else
 			url = "api/Videos/get/masha.mp4";
+	}
+
+	class TestClass
+	{
+		public bool IsPlayingWhenLoading { get; set; }
+		public bool DoShowControls { get; set; }
+		public double StartTime { get; set; }
+
+		public TestClass(bool isPlayingWhenLoading, bool doShowControls, double startTime)
+		{
+			IsPlayingWhenLoading = isPlayingWhenLoading;
+			DoShowControls = doShowControls;
+			StartTime = startTime;
+		}
 	}
 }
