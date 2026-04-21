@@ -1,4 +1,5 @@
 ﻿@using System.Text.Json
+@using WatchTogether3.Data
 @inject IJSRuntime JS
 @rendermode InteractiveServer
 
@@ -7,7 +8,7 @@
     onpause="OnPauseClick()"
     onplay="OnProceedClick()"
     onseeked="OnSeekClick()"
-    src="@Url">
+    src="@Video.Url">
         Your browser does not support the video tag.
 </video>
 <button id="play_btn" style="visibility: hidden" onclick="RequestVideoInit()">Play</button>
@@ -168,11 +169,11 @@
     public delegate void VideoActionHandler(double time = 0);
 
     [Parameter]
-    public string Url { get; set; }
+	public VideoFile Video { get; set; }
 
-    private bool isPlayingWhenLoading = false;
-    private bool showControls = true;
-    private double timeAtInit = 0;
+    [Parameter]
+	public bool DoShowControls { get; set; } = true;
+
 
     public event VideoActionHandler OnVideoProceed;
     public event VideoActionHandler OnVideoPause;
@@ -199,19 +200,24 @@
         JS.InvokeVoidAsync("ClearVideo");
     }
 
-    public void InitVideo(double timeAtInit, bool isPlayingWhenLoading, bool showControls)
-    {
-        this.timeAtInit = timeAtInit;
-        this.isPlayingWhenLoading = isPlayingWhenLoading;
-		this.showControls = showControls;
+    // public void InitVideo(double timeAtInit, bool isPlayingWhenLoading, bool showControls)
+    // {
+    //     this.timeAtInit = timeAtInit;
+    //     this.isPlayingWhenLoading = isPlayingWhenLoading;
+    //     this.showControls = showControls;
 
+    //     JS.InvokeVoidAsync("setVideoLoadedEvent");
+    // }
+
+    public void InitComponent()
+    {
         JS.InvokeVoidAsync("setVideoLoadedEvent");
-	}
+    }
 
 	[JSInvokable]
     public void InitVideo()
     {
-        JS.InvokeVoidAsync("initVideo", timeAtInit, isPlayingWhenLoading, showControls);
+        JS.InvokeVoidAsync("initVideo", Video.CurrentTime, Video.IsPlaying, DoShowControls);
 	}
 
     protected override void OnAfterRender(bool firstRender)

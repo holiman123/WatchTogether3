@@ -4,8 +4,7 @@
 <br/>
 <div>
 	<VideoComponent 
-		@ref="videoComponent" 
-		Url="@url"/>
+		@ref="videoComponent" />
 
 	<br/>
 	<button @onclick="PlayButton">Play Video</button>
@@ -54,7 +53,7 @@
 
 			testClass = new TestClass(isPlayingWhenLoading, true, 3);
 
-			videoComponent.InitVideo(testClass.StartTime, testClass.IsPlayingWhenLoading, testClass.DoShowControls);
+			videoComponent.InitComponent();
 		}
 	}
 
