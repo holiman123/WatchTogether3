@@ -65,7 +65,7 @@ else if (roomViewState == RoomViewState.FullAccess)
 	<VideoComponent 
         @ref="video"
         Video="@(RoomData.CurrentVideo)"
-        DoShowControls="true"/>
+        DoShowControls="@CanControlVideo"/>
 
     <hr>
 
@@ -107,6 +107,8 @@ else if (roomViewState == RoomViewState.NoAccess)
     public int roomId { get; set; }
 
     private RoomViewState roomViewState { get; set; } = RoomViewState.Loading;
+
+    private bool CanControlVideo { get; set; } = false;
 
     private double? progress { get; set; } = null;
 
@@ -151,13 +153,6 @@ else if (roomViewState == RoomViewState.NoAccess)
             {
                 roomViewState = RoomViewState.FullAccess;
             }
-            else if (RoomData.EnterRoomPrivacyLevel == PrivacyLevel.Owner)
-            {
-                if (User?.Id == RoomData.Owner.Id)
-                    roomViewState = RoomViewState.FullAccess;
-                else
-                    roomViewState = RoomViewState.NoAccess;
-            }
             else if (RoomData.EnterRoomPrivacyLevel == PrivacyLevel.Password)
             {
                 string? password_hash = (await sessionStorage.GetAsync<string>("password_hash")).Value;
@@ -174,6 +169,13 @@ else if (roomViewState == RoomViewState.NoAccess)
                 else
                     roomViewState = RoomViewState.NoAccess;
             }
+
+            // Video control stuff
+            CanControlVideo =
+                User?.Id == RoomData.Owner.Id ||
+                (RoomData.ControlVideoPrivacyLevel == PrivacyLevel.Public) ||
+                (RoomData.ControlVideoPrivacyLevel == PrivacyLevel.Friends && (RoomData.Owner.Friendships.Select(fr => fr.Friend?.Id).Contains(User?.Id)));
+
 
             string hubUri = Navigation.ToAbsoluteUri("/videohub").AbsoluteUri;
             HubConnectionBuilder hubBuilder = new HubConnectionBuilder();
@@ -236,9 +238,12 @@ else if (roomViewState == RoomViewState.NoAccess)
             InvokeAsync(StateHasChanged);
 
 
-            video.OnVideoProceed += SendVideoProceed;
-            video.OnVideoPause += SendVideoPause;
-            video.OnVideoSeek += SendVideoSeek;
+            if (CanControlVideo)
+            {
+                video.OnVideoProceed += SendVideoProceed;
+                video.OnVideoPause += SendVideoPause;
+                video.OnVideoSeek += SendVideoSeek;
+            }
 
             video.InitComponent();
         }
@@ -246,7 +251,7 @@ else if (roomViewState == RoomViewState.NoAccess)
 
     private void SendVideoProceed(double time)
     {
-        if (hub is null || RoomData.CurrentVideo is null)
+        if (hub is null || RoomData.CurrentVideo is null || !CanControlVideo)
             return;
 
         hub.SendAsync("Proceeded", roomId);
@@ -256,7 +261,7 @@ else if (roomViewState == RoomViewState.NoAccess)
     }
     private void SendVideoPause(double time)
     {
-        if (hub is null || RoomData.CurrentVideo is null)
+        if (hub is null || RoomData.CurrentVideo is null || !CanControlVideo)
             return;
 
         hub.SendAsync("Paused", roomId, time);
@@ -266,7 +271,7 @@ else if (roomViewState == RoomViewState.NoAccess)
     }
     private void SendVideoSeek(double time)
     {
-        if (hub is null || RoomData.CurrentVideo is null)
+        if (hub is null || RoomData.CurrentVideo is null || !CanControlVideo)
             return;
 
         hub.SendAsync("Seeked", roomId, time);
@@ -387,7 +392,7 @@ else if (roomViewState == RoomViewState.NoAccess)
     {
         if (video == RoomData.CurrentVideo)
         {
-			this.video.ClearSource();
+            this.video.ClearSource();
         }
 
         DbContext.Videos.Remove(video);
@@ -401,6 +406,8 @@ else if (roomViewState == RoomViewState.NoAccess)
 
     private void RemoveRoom()
     {
+        video.ClearSource();
+
         foreach (VideoFile video in RoomData.UploadedVideos)
         {
             DbContext.Videos.Remove(video);

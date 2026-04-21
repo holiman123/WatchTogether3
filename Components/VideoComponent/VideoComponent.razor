@@ -4,11 +4,10 @@
 @rendermode InteractiveServer
 
 <video width="320" height="240" id="video_comp"
-    controls
     onpause="OnPauseClick()"
     onplay="OnProceedClick()"
     onseeked="OnSeekClick()"
-    src="@Video.Url">
+    src="@Video?.Url">
         Your browser does not support the video tag.
 </video>
 <button id="play_btn" style="visibility: hidden" onclick="RequestVideoInit()">Play</button>
@@ -109,7 +108,8 @@
                 promise.then(_ => {
                     // Autoplay started!
                     console.log("autoplay");
-                    video.setAttribute("controls", "");
+                    if (doShowControls)
+                        video.setAttribute("controls", "");
                 }).catch(error => {
                     // Autoplay was prevented.
                     // Show a "Play" button so that user can start playback.
@@ -119,7 +119,8 @@
             }
         }
         else {
-            video.setAttribute("controls", "");
+            if (doShowControls)
+                video.setAttribute("controls", "");
         }
 
         DoSendAction = true;
@@ -169,7 +170,7 @@
     public delegate void VideoActionHandler(double time = 0);
 
     [Parameter]
-	public VideoFile Video { get; set; }
+	public VideoFile? Video { get; set; }
 
     [Parameter]
 	public bool DoShowControls { get; set; } = true;
@@ -200,15 +201,6 @@
         JS.InvokeVoidAsync("ClearVideo");
     }
 
-    // public void InitVideo(double timeAtInit, bool isPlayingWhenLoading, bool showControls)
-    // {
-    //     this.timeAtInit = timeAtInit;
-    //     this.isPlayingWhenLoading = isPlayingWhenLoading;
-    //     this.showControls = showControls;
-
-    //     JS.InvokeVoidAsync("setVideoLoadedEvent");
-    // }
-
     public void InitComponent()
     {
         JS.InvokeVoidAsync("setVideoLoadedEvent");
@@ -217,7 +209,7 @@
 	[JSInvokable]
     public void InitVideo()
     {
-        JS.InvokeVoidAsync("initVideo", Video.CurrentTime, Video.IsPlaying, DoShowControls);
+        JS.InvokeVoidAsync("initVideo", Video?.CurrentTime, Video?.IsPlaying, DoShowControls);
 	}
 
     protected override void OnAfterRender(bool firstRender)
