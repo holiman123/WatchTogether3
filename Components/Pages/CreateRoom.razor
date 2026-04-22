@@ -31,8 +31,8 @@
                 <br />
                 <InputCheckbox @bind-Value="EnterRoomSecLevel.Friends" />
                 Friends
-                <br />
-                <InputCheckbox @bind-Value="EnterRoomSecLevel.List" />
+                @* <br />
+                <InputCheckbox @bind-Value="EnterRoomSecLevel.List" /> *@
                 List
                 <br />
                 <InputCheckbox @bind-Value="EnterRoomSecLevel.Owner" />
@@ -43,21 +43,21 @@
                 <p>Control video room privacy</p>
                 <InputCheckbox @bind-Value="ControlVideoSecLevel.Public" />
                 Public
-                <br />
-                <InputCheckbox @bind-Value="ControlVideoSecLevel.Password" />
+                @* <br />
+                <InputCheckbox @bind-Value="ControlVideoSecLevel.Password" /> *@
                 Password
                 <br />
                 <InputCheckbox @bind-Value="ControlVideoSecLevel.Friends" />
                 Friends
-                <br />
-                <InputCheckbox @bind-Value="ControlVideoSecLevel.List" />
+                @* <br />
+                <InputCheckbox @bind-Value="ControlVideoSecLevel.List" /> *@
                 List
                 <br />
                 <InputCheckbox @bind-Value="ControlVideoSecLevel.Owner" />
                 Owner
             </div>
 
-            <div>
+            @* <div>
                 <p>Control player room privacy</p>
                 <InputCheckbox @bind-Value="ControlPlayerSecLevel.Public" />
                 Public
@@ -73,7 +73,7 @@
                 <br />
                 <InputCheckbox @bind-Value="ControlPlayerSecLevel.Owner" />
                 Owner
-            </div>
+            </div> *@
 
             @if (EnterRoomSecLevel.Password)
             {
