@@ -14,6 +14,7 @@
 @inject UserManager<ApplicationUser> userManager
 @inject SignInManager<ApplicationUser> signInManager
 @inject ProtectedSessionStorage sessionStorage
+@inject RoomsParticipantsService RoomsParticipants
 
 <PageTitle>Home</PageTitle>
 
@@ -39,7 +40,17 @@
     {
         <p>@room.Name</p>
         <p>by @room.Owner.UserName</p>
-        <p>watching @room.CurrentVideo</p>
+        <p>watching @(room.CurrentVideo?.FriendlyName ?? "nothing 8_8")</p>
+        <img src="@($"http://localhost:5000/api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")"
+            height="150">
+        @if (RoomsParticipants.TryGetValue(room.Id, out List<ApplicationUser> users))
+        {
+            <p>@(users.Count())</p>
+        }
+        else
+        {
+            <p>0</p>
+        }
         @if (room.EnterRoomPrivacyLevel == PrivacyLevel.Password)
         {
             if (!PasswordInputs.ContainsKey(room.Id))

@@ -3,6 +3,7 @@
     --bg-primary: #FCFFFC;
     --bg-secondary: #262A10;
     --accent: #89023E;
+    --accent-hover: #63002E;
     --text-primary: #141204;
     --text-secondary: #FCFFFC;
 }
@@ -11,6 +12,7 @@
     --bg-primary: #141204;
     --bg-secondary: #262A10;
     --accent: #89023E;
+    --accent-hover: #63002E;
     --text-primary: #FCFFFC;
     --text-secondary: #141204;
 }
@@ -37,6 +39,12 @@ a {
     border-radius: 5px;
     padding: 4px 6px 4px 6px;
     margin: 2px;
+    transition: 100ms;
+}
+
+a:hover {
+    transition: 100ms;
+    background: var(--accent-hover);
 }
 
 /*.valid.modified:not([type=checkbox]) {
