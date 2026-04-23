@@ -1,3 +1,18 @@
+.nav-bar {
+    margin: 0 0 10px 0;
+    padding: 20px 40px 20px 40px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: space-between;
+}
+
+.nav-bar .mark {
+    color: #40461B;
+    font-size: 18px;
+    font-weight: 700;
+}
+
 #blazor-error-ui {
     color-scheme: light only;
     background: lightyellow;

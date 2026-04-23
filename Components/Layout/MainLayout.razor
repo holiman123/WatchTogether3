@@ -3,24 +3,36 @@
 
 @inject AuthenticationStateProvider auth
 
-<NavLink href="/">Home </NavLink>
+<div>
+    <div class="nav-bar">
+        <div >
+            <NavLink href="/">Home</NavLink>
+        </div>
 
-<NavLink href="/Account/Manage">Account </NavLink>
+        <div class="mark">
+            Created by Daniil Luchytskyi with lo... love?
+        </div>
 
-<AuthorizeView>
-    <Authorized>
-        <NavLink href="/Account/Friends">Friends </NavLink>
+        <div class="flex-item">
+            <AuthorizeView>
+                <Authorized>
+                    <NavLink href="/Account/Friends">Friends</NavLink>
 
-        You logged in as @User.Identity.Name
-    </Authorized>
-</AuthorizeView>
+                    Hi @User.Identity.Name 0ᴗ0ﾉﾞ
+                </Authorized>
+            </AuthorizeView>
 
-@Body
+            <NavLink href="/Account/Manage">Account</NavLink>
+        </div>
+    </div>
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+    @Body
+
+    <div id="blazor-error-ui" data-nosnippet>
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
 </div>
 
 @code

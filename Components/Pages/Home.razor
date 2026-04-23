@@ -26,9 +26,6 @@
         <hr />
 
     </Authorized>
-    <NotAuthorized>
-        <NavLink href="Account/Login">Login</NavLink>
-    </NotAuthorized>
 </AuthorizeView>
 
 <InputText @bind-Value="roomSearch" @oninput="(e) => { roomSearch = e.Value.ToString(); SearchRooms(); }"/>
