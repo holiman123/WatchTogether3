@@ -4,37 +4,32 @@
 @inject AuthenticationStateProvider auth
 
 <div>
-    <div class="nav-bar">
-        <div >
-            <NavLink href="/">Home</NavLink>
-        </div>
+    <div class="body-div">
+        @Body
 
-        <div class="mark">
-            Created by 
-            <a href="https://www.linkedin.com/in/daniil-luchytskyi-7ba6b9391?utm_source=share_via&utm_content=profile&utm_medium=member_android">
-                Daniil Luchytskyi</a>
-            with lo... love?
-        </div>
-
-        <div class="flex-item">
-            <AuthorizeView>
-                <Authorized>
-                    <NavLink href="/Account/Friends">Friends</NavLink>
-
-                    Hi @User.Identity.Name 0ᴗ0ﾉﾞ
-                </Authorized>
-            </AuthorizeView>
-
-            <NavLink href="/Account/Manage">Account</NavLink>
+        <div id="blazor-error-ui" data-nosnippet>
+            An unhandled error has occurred.
+            <a href="." class="reload">Reload</a>
+            <span class="dismiss">🗙</span>
         </div>
     </div>
 
-    @Body
+    <div class="nav-bar">
+        <AuthorizeView>
+            <Authorized>
+                Hi @User.Identity.Name 0ᴗ0ﾉﾞ
+            </Authorized>
+        </AuthorizeView>
 
-    <div id="blazor-error-ui" data-nosnippet>
-        An unhandled error has occurred.
-        <a href="." class="reload">Reload</a>
-        <span class="dismiss">🗙</span>
+        <NavLink href="/">Home</NavLink>
+
+        <NavLink href="/Account/Manage">Account</NavLink>
+
+        <AuthorizeView>
+            <Authorized>
+                <NavLink href="/Account/Friends">Friends</NavLink>
+            </Authorized>
+        </AuthorizeView>
     </div>
 </div>
 

@@ -1,0 +1,67 @@
+﻿
+.room {
+    background: var(--accent-hover);
+    color: var(--text-primary);
+    outline-style: dotted;
+    outline-width: 4px;
+    border-radius: 10px;
+    flex-basis: 23%;
+}
+
+    .room img {
+        width: 100%;
+    }
+
+.room .room-data {
+    padding: 0 20px;
+    display: flex;
+    justify-content:space-between;
+}
+
+.room .no-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #606060;
+    aspect-ratio: 16/9;
+    background: #202020;
+}
+
+.rooms {
+    margin: 15px 0 0 0;
+    display: flex;
+    gap: 15px;
+    flex-grow: 1;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.mark {
+    color: #40461B;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.mark a {
+    text-decoration: underline;
+    color: #40461B;
+    background: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.top {
+    display: flex;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    justify-content: space-evenly;
+    align-items: center;
+    color: var(--text-primary);
+}

@@ -1,20 +1,12 @@
 
 :root {
-    --bg-primary: #FCFFFC;
-    --bg-secondary: #262A10;
-    --accent: #89023E;
+    --bg-primary: #000000;
+    --bg-secondary: #FFFFFF;
+    --accent-primary: #FFFFFF;
+    --accent-secondary: #89023E;
     --accent-hover: #63002E;
-    --text-primary: #141204;
-    --text-secondary: #FCFFFC;
-}
-
-.dark-theme {
-    --bg-primary: #141204;
-    --bg-secondary: #262A10;
-    --accent: #89023E;
-    --accent-hover: #63002E;
-    --text-primary: #FCFFFC;
-    --text-secondary: #141204;
+    --text-primary: #FFFFFF;
+    --text-secondary: #FFFFFF;
 }
 
 body {
@@ -23,6 +15,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 16px;
 }
+
 
 h1 {
     color: var(--text-primary);
@@ -35,7 +28,7 @@ label {
 a {
     text-decoration: none;
     color: var(--text-secondary);
-    background: var(--accent);
+    background: var(--accent-secondary);
     border-radius: 5px;
     padding: 4px 6px 4px 6px;
     margin: 2px;
@@ -45,6 +38,12 @@ a {
 a:hover {
     transition: 100ms;
     background: var(--accent-hover);
+}
+
+.search-bar {
+    font-size: 24px;
+    padding: 5px;
+    width: 500px;
 }
 
 /*.valid.modified:not([type=checkbox]) {

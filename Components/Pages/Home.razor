@@ -18,53 +18,83 @@
 
 <PageTitle>Home</PageTitle>
 
+<div class="top">
+    <div >
+        <InputText class="search-bar" @bind-Value="roomSearch" @oninput="(e) => { roomSearch = e.Value.ToString(); SearchRooms(); }" />
+        <AuthorizeView>
+            <Authorized>
+                <InputCheckbox @bind-Value="FriendsOnly" />Friends rooms
+            </Authorized>
+        </AuthorizeView>
+    </div>
+
+    <div class="mark">
+        Created by
+        <a href="https://www.linkedin.com/in/daniil-luchytskyi-7ba6b9391?utm_source=share_via&utm_content=profile&utm_medium=member_android">
+            Daniil Luchytskyi
+        </a>
+        with lo... love?
+    </div>
+</div>
+
 <AuthorizeView>
     <Authorized>
-        <br />
         <NavLink class="btn btn-primary" href="/CreateRoom">Create Room</NavLink>
-        <br />
-        <InputCheckbox @bind-Value="FriendsOnly" />Friends rooms
-        <hr />
-
     </Authorized>
 </AuthorizeView>
 
-<InputText @bind-Value="roomSearch" @oninput="(e) => { roomSearch = e.Value.ToString(); SearchRooms(); }"/>
-
-@foreach (Data.Room room in roomSearchResults)
-{
-    if (!FriendsOnly || (User is not null && User.Friendships
-                                .Where(f => f.Status == FriendshipStatus.Accepted)
-                                .Select(f => f.Friend)
-                                .Contains(room.Owner)))
+<div class="rooms">
+    @foreach (Data.Room room in roomSearchResults)
     {
-        <p>@room.Name</p>
-        <p>by @room.Owner.UserName</p>
-        <p>watching @(room.CurrentVideo?.FriendlyName ?? "nothing 8_8")</p>
-        <img src="@($"http://localhost:5000/api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")"
-            height="150">
-        @if (RoomsParticipants.TryGetValue(room.Id, out List<ApplicationUser> users))
+        if (!FriendsOnly || (User is not null && User.Friendships
+                                    .Where(f => f.Status == FriendshipStatus.Accepted)
+                                    .Select(f => f.Friend)
+                                    .Contains(room.Owner)))
         {
-            <p>@(users.Count())</p>
+            <div class="room">
+                <p>@room.Name</p>
+                @if (room.CurrentVideo is null)
+                {
+                    <div class="no-image">
+                        STILL DECIDING
+                    </div>
+                }
+                else
+                {
+                    <img src="@($"http://localhost:5000/api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")"
+                        >
+                }
+                <div class="room-data">
+                    <p>by @room.Owner.UserName</p>
+
+                    <div>
+                        @if (RoomsParticipants.TryGetValue(room.Id, out List<ApplicationUser> users))
+                        {
+                            <p>@(users.Count())</p>
+                        }
+                        else
+                        {
+                            <p>0</p>
+                        }
+                    </div>
+                </div>
+                <p>watching @(room.CurrentVideo?.FriendlyName ?? "nothing 8_8")</p>
+                
+                @if (room.EnterRoomPrivacyLevel == PrivacyLevel.Password)
+                {
+                    if (!PasswordInputs.ContainsKey(room.Id))
+                        PasswordInputs[room.Id] = "";
+                    <input @bind="PasswordInputs[room.Id]"/>
+                    <button @onclick="() => GoToRoom(room, PasswordInputs[room.Id])">Join Room</button>
+                }
+                else
+                {
+                    <button @onclick="() => GoToRoom(room)">Join Room</button>
+                }
+            </div>
         }
-        else
-        {
-            <p>0</p>
-        }
-        @if (room.EnterRoomPrivacyLevel == PrivacyLevel.Password)
-        {
-            if (!PasswordInputs.ContainsKey(room.Id))
-                PasswordInputs[room.Id] = "";
-            <input @bind="PasswordInputs[room.Id]"/>
-            <button @onclick="() => GoToRoom(room, PasswordInputs[room.Id])">Join Room</button>
-        }
-        else
-        {
-            <button @onclick="() => GoToRoom(room)">Join Room</button>
-        }
-        <hr />
     }
-}
+</div>
 
 <script>
     

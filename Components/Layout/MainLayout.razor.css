@@ -1,25 +1,24 @@
+
+.body-div {
+    display: flex;
+    margin-right: 197px;
+    flex-direction: column;
+}
+
 .nav-bar {
-    margin: 0 0 10px 0;
-    padding: 20px 40px 20px 40px;
-    background: var(--bg-secondary);
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 150px;
+    padding: 20px;
+    background: var(--bg-primary);
     color: var(--text-secondary);
     display: flex;
-    justify-content: space-between;
-}
-
-.nav-bar .mark {
-    color: #40461B;
-    font-size: 18px;
-    font-weight: 700;
-}
-
-.nav-bar .mark a {
-    text-decoration: underline;
-    color: #40461B;
-    background: none;
-    border-radius: 0;
-    padding: 0;
-    margin: 0;
+    flex-direction: column;
+    border-left-style: dotted;
+    border-left-width: 6px;
+    border-left-color: var(--accent-primary);
 }
 
 #blazor-error-ui {
@@ -36,9 +35,9 @@
     z-index: 1000;
 }
 
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
-    }
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
