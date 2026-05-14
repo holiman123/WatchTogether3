@@ -62,8 +62,8 @@ else if (roomViewState == RoomViewState.FullAccess)
     <br />
 
 
-	<VideoComponent 
-        @ref="video"
+	<VideoComponentFile 
+        @ref="videoTt"
         Video="@(RoomData.CurrentVideo)"
         DoShowControls="@CanControlVideo"/>
 
@@ -101,7 +101,7 @@ else if (roomViewState == RoomViewState.NoAccess)
 @code {
     //First time changing video, it is not set time correctly. This is because video is not fully loaded when correct time is applied
 
-    private VideoComponent video { get; set; }
+    private VideoComponent videoTt { get; set; }
 
     [Parameter]
     public int roomId { get; set; }
@@ -213,7 +213,7 @@ else if (roomViewState == RoomViewState.NoAccess)
             hub.On("RoomDataChangedFromHub", async (Data.Room roomData) =>
             {
                 if (roomData.CurrentVideo is null)
-                    video.ClearSource();
+                    videoTt.ClearSource();
 
                 VideoFile? prevVideo = RoomData.CurrentVideo;
                 VideoFile? newVideo = roomData.CurrentVideo;
@@ -240,12 +240,12 @@ else if (roomViewState == RoomViewState.NoAccess)
 
             if (CanControlVideo)
             {
-                video.OnVideoProceed += SendVideoProceed;
-                video.OnVideoPause += SendVideoPause;
-                video.OnVideoSeek += SendVideoSeek;
+                videoTt.OnVideoProceed += SendVideoProceed;
+                videoTt.OnVideoPause += SendVideoPause;
+                videoTt.OnVideoSeek += SendVideoSeek;
             }
 
-            video.InitComponent();
+            videoTt.InitComponent();
         }
     }
 
@@ -392,7 +392,7 @@ else if (roomViewState == RoomViewState.NoAccess)
     {
         if (video == RoomData.CurrentVideo)
         {
-            this.video.ClearSource();
+            this.videoTt.ClearSource();
         }
 
         DbContext.Videos.Remove(video);
@@ -406,7 +406,7 @@ else if (roomViewState == RoomViewState.NoAccess)
 
     private void RemoveRoom()
     {
-        video.ClearSource();
+        videoTt.ClearSource();
 
         foreach (VideoFile video in RoomData.UploadedVideos)
         {

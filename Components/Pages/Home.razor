@@ -61,8 +61,7 @@
                 }
                 else
                 {
-                    <img src="@($"http://localhost:5000/api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")"
-                        >
+                    <img src="@($"api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")">
                 }
                 <div class="room-data">
                     <p>by @room.Owner.UserName</p>

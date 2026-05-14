@@ -1,0 +1,94 @@
+﻿@using WatchTogether3.Data
+@inject IJSRuntime JS
+@implements VideoComponent
+
+<div id="player"></div>
+
+<script id="me">
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    // var firstScriptTag = document.getElementById('me');
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    var player;
+    function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+            height: '390',
+            width: '640',
+            videoId: 'Ty03SgAgsfg',
+            playerVars: {
+                'playsinline': 1,
+                'color': 'white'
+            },
+            events: {
+                'onReady': onPlayerReady,
+                'onStateChange': onPlayerStateChange,
+            }
+        });
+    }
+
+    function onPlayerReady(event) {
+        console.log('test');
+    }
+
+    function onPlayerStateChange(event) {
+        
+    }
+
+
+    function ClearVideo() {
+        player.stopVideo();
+        player.clearVideo();
+	}
+
+    function ProceedVideo() {
+        player.playVideo();
+	}
+    function PauseVideo(time) {
+        player.pauseVideo();
+        player.seekTo(time, true);
+    }
+    function SeekVideo(time) {
+        player.seekTo(time, true);
+    }
+</script>
+
+@code {
+    [Parameter]
+    public VideoFile? Video { get; set; }
+
+    [Parameter]
+    public bool DoShowControls { get; set; } = true;
+
+
+    public event VideoActionHandler OnVideoProceed;
+    public event VideoActionHandler OnVideoPause;
+    public event VideoActionHandler OnVideoSeek;
+
+
+    public void Proceed()
+    {
+        JS.InvokeVoidAsync("ProceedVideo");
+    }
+
+    public void Pause(double time)
+    {
+		JS.InvokeVoidAsync("PauseVideo", time);
+    }
+    
+    public void Seek(double time)
+    {
+		JS.InvokeVoidAsync("SeekVideo", time);
+	}
+
+    public void ClearSource()
+    {
+		JS.InvokeVoidAsync("ClearVideo");
+    }
+    
+    public void InitComponent()
+    {
+        
+    }
+}

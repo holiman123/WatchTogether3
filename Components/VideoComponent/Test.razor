@@ -1,10 +1,12 @@
 ﻿@page "/test"
+@using WatchTogether3.Data
 @rendermode InteractiveServer
 
 <br/>
 <div>
-	<VideoComponent 
-		@ref="videoComponent" />
+	<VideoComponentYT 
+		@ref="videoComponent" 
+		Video="@video"/>
 
 	<br/>
 	<button @onclick="PlayButton">Play Video</button>
@@ -16,7 +18,7 @@
 	<button @onclick="Clear">Clear Video</button>
 	<br />
 	<button @onclick="ChangeUrl">Change Video</button>
-	<p>Current URL: @url</p>
+	<p>Current URL: @video?.Url</p>
 	<br/>
 	<InputCheckbox @bind-Value="isPlayingWhenLoading">Is playing by default</InputCheckbox>
 
@@ -28,13 +30,26 @@
 	private VideoComponent videoComponent { get; set; }
 	private string lastAction { get; set; }
 	private string url { get; set; } = "api/Videos/get/masha.mp4";
-	private TestClass testClass { get; set; } = null;
 	private bool isPlayingWhenLoading { get; set; } = false;
+	private VideoFile video { get; set; }
 
 	protected override void OnAfterRender(bool firstRender)
 	{
 		if (firstRender)
 		{
+			video = new VideoFile
+			{
+				FileName = "masha.mp4",
+				Url = "api/Videos/get/masha.mp4",
+				SourceType = VideoSourceType.YouTube,
+				YouTubeTag = "Ty03SgAgsfg",
+				CurrentTime = 1,
+				IsPlaying = true,
+				FriendlyName = "Masha"
+			};
+
+			videoComponent.Video = video;
+
 			videoComponent.OnVideoProceed += (_) => 
 			{ 
 				lastAction = $"Video proceeded"; 
@@ -51,9 +66,9 @@
 				InvokeAsync(StateHasChanged); 
 			};
 
-			testClass = new TestClass(isPlayingWhenLoading, true, 3);
-
 			videoComponent.InitComponent();
+
+			InvokeAsync(StateHasChanged);
 		}
 	}
 
@@ -79,23 +94,9 @@
 
 	private void ChangeUrl()
 	{
-		if (url == "api/Videos/get/masha.mp4")
-			url = "api/Videos/get/masha2.mp4";
+		if (video.Url == "api/Videos/get/masha.mp4")
+			video.Url = "api/Videos/get/masha2.mp4";
 		else
-			url = "api/Videos/get/masha.mp4";
-	}
-
-	class TestClass
-	{
-		public bool IsPlayingWhenLoading { get; set; }
-		public bool DoShowControls { get; set; }
-		public double StartTime { get; set; }
-
-		public TestClass(bool isPlayingWhenLoading, bool doShowControls, double startTime)
-		{
-			IsPlayingWhenLoading = isPlayingWhenLoading;
-			DoShowControls = doShowControls;
-			StartTime = startTime;
-		}
+			video.Url = "api/Videos/get/masha.mp4";
 	}
 }

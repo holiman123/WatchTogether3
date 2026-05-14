@@ -1,6 +1,7 @@
 ﻿@using System.Text.Json
 @using WatchTogether3.Data
 @inject IJSRuntime JS
+@implements VideoComponent
 @rendermode InteractiveServer
 
 <video width="320" height="240" id="video_comp"
@@ -167,13 +168,11 @@
 </script>
 
 @code {
-    public delegate void VideoActionHandler(double time = 0);
+    [Parameter]
+    public VideoFile? Video { get; set; }
 
     [Parameter]
-	public VideoFile? Video { get; set; }
-
-    [Parameter]
-	public bool DoShowControls { get; set; } = true;
+    public bool DoShowControls { get; set; } = true;
 
 
     public event VideoActionHandler OnVideoProceed;
@@ -206,11 +205,14 @@
         JS.InvokeVoidAsync("setVideoLoadedEvent");
     }
 
-	[JSInvokable]
+    /// <summary>
+    /// Do not use this method to initialize the video. This method is called from JavaScript when the video metadata is loaded. <br/>
+    /// </summary>
+    [JSInvokable]
     public void InitVideo()
     {
         JS.InvokeVoidAsync("initVideo", Video?.CurrentTime, Video?.IsPlaying, DoShowControls);
-	}
+    }
 
     protected override void OnAfterRender(bool firstRender)
     {
@@ -218,6 +220,8 @@
         {
             var lDotNetReference = DotNetObjectReference.Create(this);
             JS.InvokeVoidAsync("setDotnetReference", lDotNetReference);
+
+            InvokeAsync(StateHasChanged);
         }
 
         base.OnAfterRender(firstRender);
@@ -253,12 +257,5 @@
                     break;
                 }
         }
-    }
-
-    public enum UserActions2
-    {
-        ProceedVideo,
-        PauseVideo,
-        SeekVideo
     }
 }

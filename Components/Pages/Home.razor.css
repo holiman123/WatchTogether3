@@ -1,6 +1,6 @@
 ﻿
 .room {
-    background: var(--accent-hover);
+    background: var(--bg-primary);
     color: var(--text-primary);
     outline-style: dotted;
     outline-width: 4px;
