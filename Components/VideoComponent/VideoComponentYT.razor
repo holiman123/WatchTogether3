@@ -2,7 +2,7 @@
 @inject IJSRuntime JS
 @implements VideoComponent
 
-<div id="player"></div>
+<div id="player_div"></div>
 
 <script id="me">
     var tag = document.createElement('script');
@@ -13,7 +13,7 @@
 
     var player;
     function onYouTubeIframeAPIReady() {
-        player = new YT.Player('player', {
+        player = new YT.Player('player_div', {
             height: '390',
             width: '640',
             videoId: 'Ty03SgAgsfg',
@@ -26,10 +26,12 @@
                 'onStateChange': onPlayerStateChange,
             }
         });
+
+        
     }
 
     function onPlayerReady(event) {
-        console.log('test');
+
     }
 
     function onPlayerStateChange(event) {
