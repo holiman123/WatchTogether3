@@ -3,7 +3,9 @@
 @inject IJSRuntime JS
 @implements VideoComponent
 
-<div id="player_div"></div>
+<div id="player_container">
+    <div id="player_div"></div>
+</div>
 
 <script id="me">
     var UserActions = Object.freeze({
@@ -48,8 +50,9 @@
     }
 
     function onPlayerStateChange(event) {
-        if (event.data == YT.PlayerState.PLAYING) {
-            SendAction(UserActions.ProceedVideo);
+        console.log(event.data);
+        if (event.data == YT.PlayerState.BUFFERING) {
+            SendAction(UserActions.ProceedVideo, player.getCurrentTime());
         } 
         else if (event.data == YT.PlayerState.PAUSED) {
             SendAction(UserActions.PauseVideo, player.getCurrentTime());
@@ -62,14 +65,20 @@
         player.clearVideo();
 	}
 
-    function ProceedVideo() {
+    function ProceedVideo(time) {
         DoSendAction = false;
-        player.playVideo();
-        
+        player.seekTo(time, true);
+
+        if (player.getPlayerState() != 1) {            
+            DoSendAction = false;
+            player.playVideo();
+        }
 	}
     function PauseVideo(time) {
-        DoSendAction = false;
-        player.pauseVideo();
+        if (player.getPlayerState() != 2) {
+            DoSendAction = false;
+            player.pauseVideo();
+        }
         player.seekTo(time, true);
         
     }
@@ -88,8 +97,6 @@
         }
 
         dnh.invokeMethodAsync('ReceiveAction', action, args);
-        console.log("SendAction:");
-        console.log(action);
     }
 </script>
 
@@ -115,9 +122,9 @@
         base.OnAfterRender(firstRender);
     }
 
-    public void Proceed()
+    public void Proceed(double time)
     {
-        JS.InvokeVoidAsync("ProceedVideo");
+        JS.InvokeVoidAsync("ProceedVideo", time);
     }
 
     public void Pause(double time)
@@ -154,7 +161,8 @@
         {
             case UserActions2.ProceedVideo:
                 {
-                    OnVideoProceed?.Invoke();
+					double time = args[0].GetDouble();
+                    OnVideoProceed?.Invoke(time);
                     break;
                 }
             case UserActions2.PauseVideo:

@@ -25,7 +25,7 @@ public interface VideoComponent
     public event VideoActionHandler OnVideoPause;
     public event VideoActionHandler OnVideoSeek;
 
-    public void Proceed();
+    public void Proceed(double time);
     public void Pause(double time);
     public void Seek(double time);
     public void ClearSource();

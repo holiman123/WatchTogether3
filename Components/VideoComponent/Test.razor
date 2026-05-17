@@ -50,9 +50,9 @@
 
 			videoComponent.Video = video;
 
-			videoComponent.OnVideoProceed += (_) => 
+			videoComponent.OnVideoProceed += (time) => 
 			{ 
-				lastAction = $"Video proceeded"; 
+				lastAction = $"Video proceeded at {time} seconds"; 
 				InvokeAsync(StateHasChanged); 
 			};
 			videoComponent.OnVideoPause += (time) => 
@@ -74,7 +74,7 @@
 
 	private void PlayButton()
 	{
-		videoComponent.Proceed();
+		videoComponent.Proceed(0);
 	}
 
 	private void PauseButton()

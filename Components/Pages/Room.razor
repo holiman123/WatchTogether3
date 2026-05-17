@@ -198,17 +198,17 @@ else if (roomViewState == RoomViewState.NoAccess)
             {
                 Navigation.NavigateTo("/");
             });
-            hub.On("PauseFromHub", (double time) =>
-            {
-                JS.InvokeVoidAsync("PauseVideo", time);
-            });
             hub.On("ProceedFromHub", () =>
             {
-                JS.InvokeVoidAsync("ProceedVideo");
+				videoTt.Proceed(0);
+            });
+            hub.On("PauseFromHub", (double time) =>
+            {
+				videoTt.Pause(time);
             });
             hub.On("SeekFromHub", (double time) =>
             {
-                JS.InvokeVoidAsync("SeekVideo", time);
+                videoTt.Seek(time);
             });
             hub.On("RoomDataChangedFromHub", async (Data.Room roomData) =>
             {

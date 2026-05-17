@@ -49,7 +49,7 @@
         video.load();
     }
 
-    async function ProceedVideo() {
+    async function ProceedVideo(time) {
         console.log("ProceedVideo");
         DoSendAction = false;
         await video.play();
@@ -180,9 +180,9 @@
     public event VideoActionHandler OnVideoSeek;
 
 
-    public void Proceed()
+    public void Proceed(double time)
     {
-        JS.InvokeVoidAsync("ProceedVideo");
+        JS.InvokeVoidAsync("ProceedVideo", time);
     }
 
     public void Pause(double time)
