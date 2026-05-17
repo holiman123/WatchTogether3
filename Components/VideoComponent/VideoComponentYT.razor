@@ -1,10 +1,25 @@
-﻿@using WatchTogether3.Data
+﻿@using System.Text.Json
+@using WatchTogether3.Data
 @inject IJSRuntime JS
 @implements VideoComponent
 
 <div id="player_div"></div>
 
 <script id="me">
+    var UserActions = Object.freeze({
+        ProceedVideo: 0,
+        PauseVideo: 1,
+        SeekVideo: 2
+    });
+
+	var DoSendAction = true;
+
+    var dnh = null;
+    function setDotnetReference(dotnetRef) {
+        console.log("received DNR");
+        dnh = dotnetRef;
+    }
+
     var tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     // var firstScriptTag = document.getElementById('me');
@@ -26,8 +41,6 @@
                 'onStateChange': onPlayerStateChange,
             }
         });
-
-        
     }
 
     function onPlayerReady(event) {
@@ -35,7 +48,12 @@
     }
 
     function onPlayerStateChange(event) {
-        
+        if (event.data == YT.PlayerState.PLAYING) {
+            SendAction(UserActions.ProceedVideo);
+        } 
+        else if (event.data == YT.PlayerState.PAUSED) {
+            SendAction(UserActions.PauseVideo, player.getCurrentTime());
+        }
     }
 
 
@@ -45,14 +63,33 @@
 	}
 
     function ProceedVideo() {
+        DoSendAction = false;
         player.playVideo();
+        
 	}
     function PauseVideo(time) {
+        DoSendAction = false;
         player.pauseVideo();
         player.seekTo(time, true);
+        
     }
     function SeekVideo(time) {
+        DoSendAction = false;
         player.seekTo(time, true);
+    }
+
+
+    function SendAction(action, ...args) {
+        if (dnh == null || DoSendAction == false) {
+            console.log(dnh);
+            console.log(DoSendAction);
+            DoSendAction = true;
+            return;
+        }
+
+        dnh.invokeMethodAsync('ReceiveAction', action, args);
+        console.log("SendAction:");
+        console.log(action);
     }
 </script>
 
@@ -68,6 +105,15 @@
     public event VideoActionHandler OnVideoPause;
     public event VideoActionHandler OnVideoSeek;
 
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            JS.InvokeVoidAsync("setDotnetReference", DotNetObjectReference.Create(this));
+        }
+
+        base.OnAfterRender(firstRender);
+    }
 
     public void Proceed()
     {
@@ -92,5 +138,37 @@
     public void InitComponent()
     {
         
+    }
+
+
+    /// <summary>
+    /// This method is called from JavaScript when a user interacts with the video element (play, pause, seek). <br/>
+    /// Please do not call this method from C#.
+    /// </summary>
+    /// <param name="actions"></param>
+    /// <param name="args"></param>
+    [JSInvokable]
+    public void ReceiveAction(UserActions2 actions, params JsonElement[] args)
+    {
+        switch (actions)
+        {
+            case UserActions2.ProceedVideo:
+                {
+                    OnVideoProceed?.Invoke();
+                    break;
+                }
+            case UserActions2.PauseVideo:
+                {
+                    double time = args[0].GetDouble();
+                    OnVideoPause?.Invoke(time);
+                    break;
+                }
+            case UserActions2.SeekVideo:
+                {
+                    double time = args[0].GetDouble();
+                    OnVideoSeek?.Invoke(time);
+                    break;
+                }
+        }
     }
 }

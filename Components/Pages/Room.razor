@@ -145,15 +145,15 @@ else if (roomViewState == RoomViewState.NoAccess)
         if (firstRender)
         {
             // Access stuff
-            if (User?.Id == RoomData.Owner.Id)
+            if (User?.Id == RoomData?.Owner.Id)
             {
                 roomViewState = RoomViewState.FullAccess;
             }
-            else if (RoomData.EnterRoomPrivacyLevel == PrivacyLevel.Public)
+            else if (RoomData?.EnterRoomPrivacyLevel == PrivacyLevel.Public)
             {
                 roomViewState = RoomViewState.FullAccess;
             }
-            else if (RoomData.EnterRoomPrivacyLevel == PrivacyLevel.Password)
+            else if (RoomData?.EnterRoomPrivacyLevel == PrivacyLevel.Password)
             {
                 string? password_hash = (await sessionStorage.GetAsync<string>("password_hash")).Value;
 
@@ -162,7 +162,7 @@ else if (roomViewState == RoomViewState.NoAccess)
                 else
                     roomViewState = RoomViewState.NoAccess;
             }
-            else if (RoomData.EnterRoomPrivacyLevel == PrivacyLevel.Friends)
+            else if (RoomData?.EnterRoomPrivacyLevel == PrivacyLevel.Friends)
             {
                 if (RoomData.Owner.Friendships.Select(fr => fr.Friend?.Id).Contains(User?.Id))
                     roomViewState = RoomViewState.FullAccess;
@@ -172,9 +172,9 @@ else if (roomViewState == RoomViewState.NoAccess)
 
             // Video control stuff
             CanControlVideo =
-                User?.Id == RoomData.Owner.Id ||
-                (RoomData.ControlVideoPrivacyLevel == PrivacyLevel.Public) ||
-                (RoomData.ControlVideoPrivacyLevel == PrivacyLevel.Friends && (RoomData.Owner.Friendships.Select(fr => fr.Friend?.Id).Contains(User?.Id)));
+                User?.Id == RoomData?.Owner.Id ||
+                (RoomData?.ControlVideoPrivacyLevel == PrivacyLevel.Public) ||
+                (RoomData?.ControlVideoPrivacyLevel == PrivacyLevel.Friends && (RoomData.Owner.Friendships.Select(fr => fr.Friend?.Id).Contains(User?.Id)));
 
 
             string hubUri = Navigation.ToAbsoluteUri("/videohub").AbsoluteUri;
@@ -245,7 +245,7 @@ else if (roomViewState == RoomViewState.NoAccess)
                 videoTt.OnVideoSeek += SendVideoSeek;
             }
 
-            videoTt.InitComponent();
+            videoTt?.InitComponent();
         }
     }
 
@@ -438,7 +438,7 @@ else if (roomViewState == RoomViewState.NoAccess)
             {
                 users.Remove(User);
 
-                if (users.Count == 0 && RoomData.CurrentVideo is not null)
+                if (users.Count == 0 && RoomData?.CurrentVideo is not null)
                     SendVideoPause(RoomData.CurrentVideo.CurrentTime);
             }
 
