@@ -3,13 +3,12 @@ using WatchTogether3.Data;
 
 namespace WatchTogether3.Components.VideoComponent;
 
-public delegate void VideoActionHandler(double time = 0);
+public delegate void VideoActionHandler(VideoComponent videoComponent, double time = 0);
 
 public enum UserActions2
 {
     ProceedVideo,
-    PauseVideo,
-    SeekVideo
+    PauseVideo
 }
 
 public interface VideoComponent
@@ -23,10 +22,9 @@ public interface VideoComponent
 
     public event VideoActionHandler OnVideoProceed;
     public event VideoActionHandler OnVideoPause;
-    public event VideoActionHandler OnVideoSeek;
 
-    public void Proceed(double time);
-    public void Pause(double time);
+    public void Proceed();
+    public void Pause();
     public void Seek(double time);
     public void ClearSource();
     public void InitComponent();

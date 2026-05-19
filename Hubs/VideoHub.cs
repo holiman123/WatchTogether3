@@ -33,38 +33,13 @@ public class VideoHub : Hub
         await Clients.OthersInGroup($"room:{roomId}").SendAsync("PauseFromHub", time);
     }
 
-    public async Task Proceeded(int roomId)
+    public async Task Proceeded(int roomId, double time)
     {
-        await Clients.OthersInGroup($"room:{roomId}").SendAsync("ProceedFromHub");
-    }
-
-    public async Task Seeked(int roomId, double time)
-    {
-        await Clients.OthersInGroup($"room:{roomId}").SendAsync("SeekFromHub", time);
+        await Clients.OthersInGroup($"room:{roomId}").SendAsync("ProceedFromHub", time);
     }
 
     public async Task RoomDataChanged(int roomId, Room roomData)
     {
         await Clients.OthersInGroup($"room:{roomId}").SendAsync("RoomDataChangedFromHub", roomData);
     }
-
-    //public async Task VideoChanged(int roomId, VideoFile video)
-    //{
-    //    await Clients.OthersInGroup($"room:{roomId}").SendAsync("VideoChangedFromHub", video);
-    //}
-
-    //public async Task VideoRenamed(int roomId, VideoFile video)
-    //{
-    //    await Clients.OthersInGroup($"room:{roomId}").SendAsync("VideoRenamedFromHub", video);
-    //}
-
-    //public async Task VideoRemoved(int roomId, VideoFile video)
-    //{
-    //    await Clients.OthersInGroup($"room:{roomId}").SendAsync("VideoRemovedFromHub", video);
-    //}
-
-    //public async Task VideoUploaded(int roomId, VideoFile video)
-    //{
-    //    await Clients.OthersInGroup($"room:{roomId}").SendAsync("VideoUploadedFromHub", video);
-    //}
 }

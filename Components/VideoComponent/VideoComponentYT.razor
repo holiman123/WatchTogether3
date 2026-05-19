@@ -10,8 +10,7 @@
 <script id="me">
     var UserActions = Object.freeze({
         ProceedVideo: 0,
-        PauseVideo: 1,
-        SeekVideo: 2
+        PauseVideo: 1
     });
 
 	var DoSendAction = true;
@@ -24,7 +23,6 @@
 
     var tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
-    // var firstScriptTag = document.getElementById('me');
     var firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
@@ -49,14 +47,18 @@
 
     }
 
+	var prevEvent = null;
+    var prevEventPlayerTime = null;
     function onPlayerStateChange(event) {
-        console.log(event.data);
-        if (event.data == YT.PlayerState.BUFFERING) {
-            SendAction(UserActions.ProceedVideo, player.getCurrentTime());
+        if (prevEvent == YT.PlayerState.BUFFERING && event.data == YT.PlayerState.PLAYING) {
+            SendAction(UserActions.ProceedVideo, prevEventPlayerTime);
         } 
         else if (event.data == YT.PlayerState.PAUSED) {
             SendAction(UserActions.PauseVideo, player.getCurrentTime());
         }
+
+        prevEventPlayerTime = player.getCurrentTime()
+		prevEvent = event.data;
     }
 
 
@@ -65,37 +67,35 @@
         player.clearVideo();
 	}
 
-    function ProceedVideo(time) {
-        DoSendAction = false;
-        player.seekTo(time, true);
-
+    function ProceedVideo() {
         if (player.getPlayerState() != 1) {            
             DoSendAction = false;
             player.playVideo();
         }
 	}
-    function PauseVideo(time) {
+    function PauseVideo() {
         if (player.getPlayerState() != 2) {
             DoSendAction = false;
             player.pauseVideo();
-        }
-        player.seekTo(time, true);
-        
+        }        
     }
     function SeekVideo(time) {
-        DoSendAction = false;
+		// If the video is paused do not set DoSendAction to false,
+		// because that would cause next event to be ignored.
+        if (player.getPlayerState() != 2) {
+            DoSendAction = false;
+        }
         player.seekTo(time, true);
     }
 
 
     function SendAction(action, ...args) {
         if (dnh == null || DoSendAction == false) {
-            console.log(dnh);
-            console.log(DoSendAction);
             DoSendAction = true;
             return;
         }
 
+		console.log("Sending action: " + action + " with args: " + args);
         dnh.invokeMethodAsync('ReceiveAction', action, args);
     }
 </script>
@@ -110,7 +110,6 @@
 
     public event VideoActionHandler OnVideoProceed;
     public event VideoActionHandler OnVideoPause;
-    public event VideoActionHandler OnVideoSeek;
 
     protected override void OnAfterRender(bool firstRender)
     {
@@ -122,14 +121,14 @@
         base.OnAfterRender(firstRender);
     }
 
-    public void Proceed(double time)
+    public void Proceed()
     {
-        JS.InvokeVoidAsync("ProceedVideo", time);
+        JS.InvokeVoidAsync("ProceedVideo");
     }
 
-    public void Pause(double time)
+    public void Pause()
     {
-		JS.InvokeVoidAsync("PauseVideo", time);
+		JS.InvokeVoidAsync("PauseVideo");
     }
     
     public void Seek(double time)
@@ -162,19 +161,13 @@
             case UserActions2.ProceedVideo:
                 {
 					double time = args[0].GetDouble();
-                    OnVideoProceed?.Invoke(time);
+                    OnVideoProceed?.Invoke(this, time);
                     break;
                 }
             case UserActions2.PauseVideo:
                 {
                     double time = args[0].GetDouble();
-                    OnVideoPause?.Invoke(time);
-                    break;
-                }
-            case UserActions2.SeekVideo:
-                {
-                    double time = args[0].GetDouble();
-                    OnVideoSeek?.Invoke(time);
+                    OnVideoPause?.Invoke(this, time);
                     break;
                 }
         }

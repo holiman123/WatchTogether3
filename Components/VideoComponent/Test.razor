@@ -4,7 +4,7 @@
 
 <br/>
 <div>
-	<VideoComponentYT 
+	<VideoComponentFile 
 		@ref="videoComponent" 
 		Video="@video"/>
 
@@ -50,19 +50,14 @@
 
 			videoComponent.Video = video;
 
-			videoComponent.OnVideoProceed += (time) => 
+			videoComponent.OnVideoProceed += (_, time) => 
 			{ 
 				lastAction = $"Video proceeded at {time} seconds"; 
 				InvokeAsync(StateHasChanged); 
 			};
-			videoComponent.OnVideoPause += (time) => 
+			videoComponent.OnVideoPause += (_, time) => 
 			{ 
 				lastAction = $"Video paused at {time} seconds"; 
-				InvokeAsync(StateHasChanged); 
-			};
-			videoComponent.OnVideoSeek += (time) => 
-			{ 
-				lastAction = $"Video seeked to {time} seconds"; 
 				InvokeAsync(StateHasChanged); 
 			};
 
@@ -74,12 +69,12 @@
 
 	private void PlayButton()
 	{
-		videoComponent.Proceed(0);
+		videoComponent.Proceed();
 	}
 
 	private void PauseButton()
 	{
-		videoComponent.Pause(1);
+		videoComponent.Pause();
 	}
 
 	private void SeekButton()

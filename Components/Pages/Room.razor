@@ -62,7 +62,7 @@ else if (roomViewState == RoomViewState.FullAccess)
     <br />
 
 
-	<VideoComponentFile 
+	<VideoComponentYT 
         @ref="videoTt"
         Video="@(RoomData.CurrentVideo)"
         DoShowControls="@CanControlVideo"/>
@@ -198,17 +198,15 @@ else if (roomViewState == RoomViewState.NoAccess)
             {
                 Navigation.NavigateTo("/");
             });
-            hub.On("ProceedFromHub", () =>
+            hub.On("ProceedFromHub", (double time) =>
             {
-				videoTt.Proceed(0);
+                videoTt.Seek(time);
+				videoTt.Proceed();
             });
             hub.On("PauseFromHub", (double time) =>
             {
-				videoTt.Pause(time);
-            });
-            hub.On("SeekFromHub", (double time) =>
-            {
-                videoTt.Seek(time);
+				videoTt.Pause();
+				videoTt.Seek(time);
             });
             hub.On("RoomDataChangedFromHub", async (Data.Room roomData) =>
             {
@@ -242,24 +240,23 @@ else if (roomViewState == RoomViewState.NoAccess)
             {
                 videoTt.OnVideoProceed += SendVideoProceed;
                 videoTt.OnVideoPause += SendVideoPause;
-                videoTt.OnVideoSeek += SendVideoSeek;
             }
 
             videoTt?.InitComponent();
         }
     }
 
-    private void SendVideoProceed(double time)
+    private void SendVideoProceed(VideoComponent videoComponent, double time)
     {
         if (hub is null || RoomData.CurrentVideo is null || !CanControlVideo)
             return;
 
-        hub.SendAsync("Proceeded", roomId);
+        hub.SendAsync("Proceeded", roomId, time);
 
         RoomData.CurrentVideo.Play();
         DbContext.SaveChanges();
     }
-    private void SendVideoPause(double time)
+    private void SendVideoPause(VideoComponent videoComponent, double time)
     {
         if (hub is null || RoomData.CurrentVideo is null || !CanControlVideo)
             return;
@@ -267,16 +264,6 @@ else if (roomViewState == RoomViewState.NoAccess)
         hub.SendAsync("Paused", roomId, time);
 
         RoomData.CurrentVideo.Pause();
-        DbContext.SaveChanges();
-    }
-    private void SendVideoSeek(double time)
-    {
-        if (hub is null || RoomData.CurrentVideo is null || !CanControlVideo)
-            return;
-
-        hub.SendAsync("Seeked", roomId, time);
-
-        RoomData.CurrentVideo.Seek(time);
         DbContext.SaveChanges();
     }
 
@@ -439,7 +426,7 @@ else if (roomViewState == RoomViewState.NoAccess)
                 users.Remove(User);
 
                 if (users.Count == 0 && RoomData?.CurrentVideo is not null)
-                    SendVideoPause(RoomData.CurrentVideo.CurrentTime);
+                    SendVideoPause(videoTt, RoomData.CurrentVideo.CurrentTime);
             }
 
             if (User is not null)
@@ -455,8 +442,7 @@ else if (roomViewState == RoomViewState.NoAccess)
     public enum UserActions2
     {
         PauseVideo,
-        ProceedVideo,
-        SeekVideo
+        ProceedVideo
     }
 
     public enum RoomViewState

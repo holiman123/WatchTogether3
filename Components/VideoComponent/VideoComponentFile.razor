@@ -7,7 +7,6 @@
 <video width="320" height="240" id="video_comp"
     onpause="OnPauseClick()"
     onplay="OnProceedClick()"
-    onseeked="OnSeekClick()"
     src="@Video?.Url">
         Your browser does not support the video tag.
 </video>
@@ -16,8 +15,7 @@
 <script>
     var UserActions = Object.freeze({
         ProceedVideo: 0,
-        PauseVideo: 1,
-        SeekVideo: 2
+        PauseVideo: 1
     });
 
     var DoSendAction = true;
@@ -49,60 +47,48 @@
         video.load();
     }
 
-    async function ProceedVideo(time) {
-        console.log("ProceedVideo");
+    function ProceedVideo() {
         DoSendAction = false;
-        await video.play();
-        DoSendAction = true;
+        video.play();
     }
 
-    async function PauseVideo(time) {
-        console.log("PauseVideo");
+    function PauseVideo() {
         DoSendAction = false;
-        await video.pause();
-        await seekVideo(video, time);
-        DoSendAction = true;
+        video.pause();
     }
 
-    async function SeekVideo(time) {
-        console.log("SeekVideo");
+    function SeekVideo(time) {
         DoSendAction = false;
-        await seekVideo(video, time);
-        DoSendAction = true;
+        seekVideo(video, time);
     }
 
 
     function OnProceedClick() {
-        SendAction(UserActions.ProceedVideo);
+        SendAction(UserActions.ProceedVideo, video.currentTime);
     }
     function OnPauseClick() {
         SendAction(UserActions.PauseVideo, video.currentTime);
     }
-    function OnSeekClick() {
-        SendAction(UserActions.SeekVideo, video.currentTime);
-    }
 
     function SendAction(action, ...args) {
         if (dnh == null || DoSendAction == false) {
-            console.log(dnh);
-            console.log(DoSendAction);
+			DoSendAction = true;
             return;
         }
 
+		console.log("Sending action: " + action + " with args: " + args);
         dnh.invokeMethodAsync('ReceiveAction', action, args);
-        console.log("SendAction");
-        console.log(action);
-        console.log(args);
     }
 
     async function initVideo(time, isPlay, doShowControls) {
         console.log("initVideo");
         console.log(time);
 
-        DoSendAction = false;
+        //DoSendAction = false;
         console.log(await seekVideo(video, time));
 
         if (isPlay) {
+            DoSendAction = false;
             var promise = video.play();
 
             if (promise !== undefined) {
@@ -123,8 +109,6 @@
             if (doShowControls)
                 video.setAttribute("controls", "");
         }
-
-        DoSendAction = true;
     }
 
 
@@ -177,17 +161,16 @@
 
     public event VideoActionHandler OnVideoProceed;
     public event VideoActionHandler OnVideoPause;
-    public event VideoActionHandler OnVideoSeek;
 
 
-    public void Proceed(double time)
+    public void Proceed()
     {
-        JS.InvokeVoidAsync("ProceedVideo", time);
+        JS.InvokeVoidAsync("ProceedVideo");
     }
 
-    public void Pause(double time)
+    public void Pause()
     {
-        JS.InvokeVoidAsync("PauseVideo", time);
+        JS.InvokeVoidAsync("PauseVideo");
     }
 
     public void Seek(double time)
@@ -241,19 +224,14 @@
         {
             case UserActions2.ProceedVideo:
                 {
-                    OnVideoProceed?.Invoke();
+                    double time = args[0].GetDouble();
+                    OnVideoProceed?.Invoke(this, time);
                     break;
                 }
             case UserActions2.PauseVideo:
                 {
                     double time = args[0].GetDouble();
-					OnVideoPause?.Invoke(time);
-                    break;
-                }
-            case UserActions2.SeekVideo:
-                {
-                    double time = args[0].GetDouble();
-					OnVideoSeek?.Invoke(time);
+					OnVideoPause?.Invoke(this, time);
                     break;
                 }
         }
