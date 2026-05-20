@@ -35,8 +35,11 @@ else if (roomViewState == RoomViewState.FullAccess)
     <h1>@RoomData.Name room by @RoomData.Owner.UserName</h1>
 
     <hr>
-
     <InputFile id="fileUpload" OnChange="LoadFile" style="display:none" />
+    
+    <hr>
+    <InputText @bind-Value="tempYTtag"/>
+    <button @onclick="AddYouTubeVideo">Add YouTube Video</button>
 
     @foreach (VideoFile video in RoomData.UploadedVideos.OrderBy(v => v.Order))
     {
@@ -61,11 +64,18 @@ else if (roomViewState == RoomViewState.FullAccess)
     <br />
     <br />
 
-
-	<VideoComponentYT 
-        @ref="videoTt"
-        Video="@(RoomData.CurrentVideo)"
-        DoShowControls="@CanControlVideo"/>
+    @if (RoomData.CurrentVideo?.SourceType == VideoSourceType.Local)
+    {
+        <VideoComponentFile @ref="videoTt"
+                            Video="@(RoomData.CurrentVideo)"
+                            DoShowControls="@CanControlVideo" />
+    }
+    else if (RoomData.CurrentVideo?.SourceType == VideoSourceType.YouTube)
+    {
+	    <VideoComponentYT @ref="videoTt"
+                          Video="@(RoomData.CurrentVideo)"
+                          DoShowControls="@CanControlVideo"/>
+    }
 
     <hr>
 
@@ -121,6 +131,10 @@ else if (roomViewState == RoomViewState.NoAccess)
     private CancellationTokenSource FileUploadCTS { get; set; }
 
     private string tempNewVideoName { get; set; } = string.Empty;
+
+    private string tempYTtag { get; set; } = string.Empty;
+
+    private bool VideoSourceTypeChanged = false;
 
 
     protected override void OnInitialized()
@@ -182,7 +196,20 @@ else if (roomViewState == RoomViewState.NoAccess)
 #if DEBUG
             hubBuilder.ConfigureLogging(opt => opt.SetMinimumLevel(LogLevel.Trace).AddConsole());
 #endif
-            hub = hubBuilder.WithUrl(hubUri)
+
+            // All this options for SSL certificate validation are needed because
+            // in development environment we use self-signed certificates, and without them SignalR won't connect to hub
+            hub = hubBuilder.WithUrl(hubUri, (opts) => {
+                opts.HttpMessageHandlerFactory = (message) =>
+                {
+                    if (message is HttpClientHandler clientHandler)
+                        // always verify the SSL certificate
+                        clientHandler.ServerCertificateCustomValidationCallback +=
+                            (sender, certificate, chain, sslPolicyErrors) => { return true; };
+                    return message;
+                };
+                opts.WebSocketConfiguration = wsc => wsc.RemoteCertificateValidationCallback = (sender, certificate, chain, policyErrors) => true;
+            })
             .AddJsonProtocol(opt => opt.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)
             .Build();
 
@@ -201,12 +228,12 @@ else if (roomViewState == RoomViewState.NoAccess)
             hub.On("ProceedFromHub", (double time) =>
             {
                 videoTt.Seek(time);
-				videoTt.Proceed();
+                videoTt.Proceed();
             });
             hub.On("PauseFromHub", (double time) =>
             {
-				videoTt.Pause();
-				videoTt.Seek(time);
+                videoTt.Pause();
+                videoTt.Seek(time);
             });
             hub.On("RoomDataChangedFromHub", async (Data.Room roomData) =>
             {
@@ -244,6 +271,12 @@ else if (roomViewState == RoomViewState.NoAccess)
 
             videoTt?.InitComponent();
         }
+
+        if (VideoSourceTypeChanged)
+        {
+            videoTt?.InitComponent();
+            VideoSourceTypeChanged = false;
+        }
     }
 
     private void SendVideoProceed(VideoComponent videoComponent, double time)
@@ -263,7 +296,7 @@ else if (roomViewState == RoomViewState.NoAccess)
 
         hub.SendAsync("Paused", roomId, time);
 
-        RoomData.CurrentVideo.Pause();
+        RoomData.CurrentVideo.Pause(time);
         DbContext.SaveChanges();
     }
 
@@ -332,6 +365,30 @@ else if (roomViewState == RoomViewState.NoAccess)
         await InvokeAsync(StateHasChanged);
     }
 
+    private void AddYouTubeVideo()
+    {
+        if (String.IsNullOrWhiteSpace(tempYTtag))
+            return;
+
+        VideoFile videoFile = new VideoFile
+		{
+			FriendlyName = tempYTtag,
+			SourceType = VideoSourceType.YouTube,
+			YouTubeTag = tempYTtag,
+			Room = RoomData,
+			UploadDate = DateTime.Now
+		};
+
+        RoomData.CurrentVideo = videoFile;
+        RoomData.UploadedVideos.Add(videoFile);
+        DbContext.SaveChanges();
+
+        hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
+        tempYTtag = String.Empty;
+
+        InvokeAsync(StateHasChanged);
+    }
+
     private void MoveVideoUp(VideoFile video)
     {
         int index = RoomData.UploadedVideos.IndexOf(video);
@@ -358,11 +415,16 @@ else if (roomViewState == RoomViewState.NoAccess)
 
     private void ChangeVideo(VideoFile video)
     {
+        if (video.SourceType != videoTt.Video?.SourceType)
+            VideoSourceTypeChanged = true;
+
         RoomData.CurrentVideo?.Pause();
         RoomData.CurrentVideo = video;
         DbContext.SaveChanges();
 
         hub.SendAsync("RoomDataChanged", roomId, RoomData);
+
+        InvokeAsync(StateHasChanged);
     }
 
     private void RenameVideo(VideoFile video, string newName)

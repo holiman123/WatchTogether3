@@ -52,14 +52,19 @@ public class VideoFile : OrderableItem
         }
     }
 
-    public void Pause()
+    public void Pause(double time)
     {
         if (IsPlaying)
         {
             // Update CurrentTime to the exact time when paused
-            CurrentTime = CurrentTime;
+            CurrentTime = time;
             IsPlaying = false;
         }
+    }
+
+    public void Pause()
+    {
+        Pause(CurrentTime);
     }
 
     public void Seek(double time)

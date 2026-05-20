@@ -31,23 +31,30 @@ public class VideosController : ControllerBase
     [HttpGet("getframe/{name}-{time}")]
     public unsafe IResult GetVideoFrame(string name, double time)
     {
-        MediaFile video = MediaFile.Open($"D:\\WatchTogether3_files\\{name}");
-
-        ImageData frame = video.Video.GetFrame(TimeSpan.FromSeconds(time));
-        MemoryStream ms = new MemoryStream();
-        fixed (byte* ptr = frame.Data)
+        try
         {
-            Bitmap bitmap = new Bitmap(
-                frame.ImageSize.Width, 
-                frame.ImageSize.Height, 
-                frame.Stride, 
-                PixelFormat.Format24bppRgb, 
-                (IntPtr)ptr);
+            MediaFile video = MediaFile.Open($"D:\\WatchTogether3_files\\{name}");
 
-            bitmap.Save(ms, ImageFormat.Jpeg);
+            ImageData frame = video.Video.GetFrame(TimeSpan.FromSeconds(time));
+            MemoryStream ms = new MemoryStream();
+            fixed (byte* ptr = frame.Data)
+            {
+                Bitmap bitmap = new Bitmap(
+                    frame.ImageSize.Width,
+                    frame.ImageSize.Height,
+                    frame.Stride,
+                    PixelFormat.Format24bppRgb,
+                    (IntPtr)ptr);
+
+                bitmap.Save(ms, ImageFormat.Jpeg);
+            }
+
+            ms.Position = 0;
+            return Results.File(ms, "image/jpeg", $"{name}_f{time}.jpeg", enableRangeProcessing: true);
         }
-
-        ms.Position = 0;
-        return Results.File(ms, "image/jpeg", $"{name}_f{time}.jpeg", enableRangeProcessing: true);
+        catch (Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
     }
 }

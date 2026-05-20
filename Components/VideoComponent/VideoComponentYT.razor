@@ -21,17 +21,20 @@
         dnh = dotnetRef;
     }
 
-    var tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    var firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    initAPI();
+
+    function initAPI() {
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    }
 
     var player;
     function onYouTubeIframeAPIReady() {
         player = new YT.Player('player_div', {
             height: '390',
             width: '640',
-            videoId: 'Ty03SgAgsfg',
             playerVars: {
                 'playsinline': 1,
                 'color': 'white'
@@ -44,7 +47,7 @@
     }
 
     function onPlayerReady(event) {
-
+        dnh.invokeMethodAsync("LoadYtTag");
     }
 
 	var prevEvent = null;
@@ -56,8 +59,11 @@
         else if (event.data == YT.PlayerState.PAUSED) {
             SendAction(UserActions.PauseVideo, player.getCurrentTime());
         }
+        else if (event.data == YT.PlayerState.UNSTARTED) {
+            dnh.invokeMethodAsync("InitVideo");
+        }
 
-        prevEventPlayerTime = player.getCurrentTime()
+        prevEventPlayerTime = player.getCurrentTime();
 		prevEvent = event.data;
     }
 
@@ -86,6 +92,9 @@
             DoSendAction = false;
         }
         player.seekTo(time, true);
+    }
+    function LoadVideo(tag) {
+        player.cueVideoById(tag);
     }
 
 
@@ -128,22 +137,44 @@
 
     public void Pause()
     {
-		JS.InvokeVoidAsync("PauseVideo");
+        JS.InvokeVoidAsync("PauseVideo");
     }
-    
+
     public void Seek(double time)
     {
-		JS.InvokeVoidAsync("SeekVideo", time);
-	}
+        JS.InvokeVoidAsync("SeekVideo", time);
+    }
 
     public void ClearSource()
     {
-		JS.InvokeVoidAsync("ClearVideo");
+        JS.InvokeVoidAsync("ClearVideo");
     }
-    
+
     public void InitComponent()
     {
-        
+        //JS.InvokeVoidAsync("initAPI");
+        JS.InvokeVoidAsync("onYouTubeIframeAPIReady");
+    }
+
+    [JSInvokable]
+    public void LoadYtTag()
+    {
+        if (Video is null)
+            return;
+
+        JS.InvokeVoidAsync("LoadVideo", Video.YouTubeTag);
+    }
+
+    [JSInvokable]
+    public void InitVideo()
+    {
+        if (Video is null)
+            return;
+
+        Seek(Video.CurrentTime);
+
+        if (Video.IsPlaying)
+            Proceed();
     }
 
 
