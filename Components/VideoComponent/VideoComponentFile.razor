@@ -80,12 +80,13 @@
         dnh.invokeMethodAsync('ReceiveAction', action, args);
     }
 
-    async function initVideo(time, isPlay, doShowControls) {
+    function initVideo(time, isPlay, doShowControls) {
+        try {
         console.log("initVideo");
         console.log(time);
 
         //DoSendAction = false;
-        console.log(await seekVideo(video, time));
+        console.log(seekVideo(video, time));
 
         if (isPlay) {
             DoSendAction = false;
@@ -108,6 +109,10 @@
         else {
             if (doShowControls)
                 video.setAttribute("controls", "");
+        }
+        }
+        catch (error) { 
+            console.log(error);
         }
     }
 

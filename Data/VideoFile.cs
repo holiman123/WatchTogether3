@@ -43,11 +43,12 @@ public class VideoFile : OrderableItem
     public DateTime LastPlayTime { get; set; }
 
 
-    public void Play()
+    public void Play(double time)
     {
         if (!IsPlaying)
         {
             IsPlaying = true;
+            CurrentTime = time;
             LastPlayTime = DateTime.Now;
         }
     }
