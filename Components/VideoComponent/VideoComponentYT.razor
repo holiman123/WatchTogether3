@@ -1,21 +1,16 @@
-﻿@using System.Text.Json
-@using WatchTogether3.Data
-@inject IJSRuntime JS
+﻿
 @implements VideoComponent
-@implements IDisposable
 
-@* <script src="Components/VideoComponent/VideoComponentYT.razor.js" type="text/javascript"></script> *@
-<div id="youtube_api_sctipt_div"></div>
+@using System.Text.Json
+@using WatchTogether3.Data
+
+@inject IJSRuntime JS
+@inject ApplicationDbContext DbContext
 
 <div id="player_container">
     <div id="player_div"></div>
 </div>
 
-<script>
-    function onYouTubeIframeAPIReady() {
-        console.log('YouTube API is ready from razor page');
-    }
-</script>
 
 @code {
     [Parameter]
@@ -29,13 +24,6 @@
     public event VideoActionHandler OnVideoProceed;
     public event VideoActionHandler OnVideoPause;
 
-    protected override async Task OnInitializedAsync()
-    {
-
-
-        base.OnInitialized();
-    }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -46,12 +34,7 @@
 
             await jsModule.InvokeVoidAsync("setDotnetReference", DotNetObjectReference.Create(this));
 
-            await InvokeAsync(StateHasChanged);
-
             await jsModule.InvokeVoidAsync("onYouTubeIframeAPIReady");
-
-            // await JS.InvokeVoidAsync("setDotnetReference", DotNetObjectReference.Create(this));
-            // _ = 0;
         }
 
         base.OnAfterRender(firstRender);
@@ -79,9 +62,7 @@
 
     public async void InitComponent()
     {
-        //await JS.InvokeVoidAsync("setDotnetReference", DotNetObjectReference.Create(this));
 
-        //await JS.InvokeVoidAsync("onYouTubeIframeAPIReady");
     }
 
     [JSInvokable]
@@ -91,7 +72,8 @@
             return;
 
         // Send youtube tag
-        jsModule.InvokeVoidAsync("LoadVideo", Video.YouTubeTag, Video.CurrentTime);
+        DbContext.Videos.Entry(Video).Reload();
+        jsModule.InvokeVoidAsync("LoadVideo", Video.YouTubeTag);
     }
 
     [JSInvokable]
@@ -99,6 +81,8 @@
     {
         if (Video is null)
             return;
+
+        DbContext.Videos.Entry(Video).Reload();
 
         Seek(Video.CurrentTime);
 
@@ -131,10 +115,5 @@
                     break;
                 }
         }
-    }
-
-    public void Dispose()
-    {
-        _ = 0;
     }
 }

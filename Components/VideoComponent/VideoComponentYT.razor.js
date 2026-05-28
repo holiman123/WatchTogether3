@@ -13,50 +13,21 @@ export function setDotnetReference(dotnetRef) {
     dnr = dotnetRef;
 }
 
-// initAPI();
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-
-/*function initAPI() {
-    if (typeof YT == 'undefined') {
-        console.log('init youtube api');
-        var tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        var headTag = document.getElementsByTagName('head')[0];
-        headTag.append(tag);
-        // var firstScriptTag = document.getElementsByTagName('script')[0];
-        // firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-        //var ScriptTag = document.getElementById('youtube_api_sctipt_div');
-        //ScriptTag.append(tag);
-        console.log('init youtube api finished');
-    }
-}*/
-
 var player;
 export function onYouTubeIframeAPIReady() {
-    console.log('create player');
-    console.log(player);
-    try {
-        player = new YT.Player('player_div', {
-            height: '390',
-            width: '640',
-            playerVars: {
-                'playsinline': 1,
-                'color': 'white'
-            },
-            events: {
-                'onReady': onPlayerReady,
-                'onStateChange': onPlayerStateChange
-            }
-        });
-    }
-    catch (error) {
-        console.log(error);
-    }
-    console.log("player created");
+    player = new YT.Player('player_div', {
+        height: '390',
+        width: '640',
+        playerVars: {
+            'playsinline': 1,
+            'color': 'white'
+        },
+        events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange
+        }
+    });
+    console.log('YT player created');
 }
 
 export function onPlayerReady(event) {
@@ -66,6 +37,7 @@ export function onPlayerReady(event) {
 
 export function LoadVideo(tag) {
     player.cueVideoById(tag);
+    console.log("Video loaded: " + tag);
 }
 
 var prevEventPlayerTime = null;
@@ -103,26 +75,35 @@ export function ClearVideo() {
 }
 
 export function ProceedVideo() {
-    if (player.getPlayerState() != 1) {
-        DoSendAction = false;
-        player.playVideo();
-    }
+    var state = player.getPlayerState();
+
+    if (state == 5 || state == 1)
+        return;
+
+    DoSendAction = false;
+    player.playVideo();
 }
 export function PauseVideo() {
-    if (player.getPlayerState() != 2) {
-        DoSendAction = false;
-        player.pauseVideo();
-    }
+    var state = player.getPlayerState();
+
+    if (state == 5 || state == 2)
+        return;
+
+    DoSendAction = false;
+    player.pauseVideo();
 }
 export function SeekVideo(time) {
     // If the video is paused do not set DoSendAction to false,
     // because that would cause next event to be ignored.
     var state = player.getPlayerState();
-    if (state != 2 && state != -1 && state != 5) {
+
+    if (state == 5)
+        return;
+
+    if (state != 2 && state != -1) {
         DoSendAction = false;
     }
     player.seekTo(time, true);
-    console.log('seek youtube');
 }
 
 
@@ -132,6 +113,6 @@ export function SendAction(action, ...args) {
         return;
     }
 
-    //console.log("Sending action: " + action + " with args: " + args);
+    // console.log("Sending action: " + action + " with args: " + args);
     dnr.invokeMethodAsync('ReceiveAction', action, args);
 }
