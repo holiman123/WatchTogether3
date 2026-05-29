@@ -1,4 +1,4 @@
-﻿console.log('isolated JS');
+﻿console.log('Loading isolated JS of YT player');
 
 var UserActions = Object.freeze({
     ProceedVideo: 0,

@@ -33,6 +33,25 @@
     </div>
 </div>
 
+<script>
+    initAPI();
+
+    function initAPI() {
+        if (typeof YT == 'undefined') {
+            console.log('init youtube api');
+            var tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            var headTag = document.getElementsByTagName('head')[0];
+            headTag.append(tag);
+            // var firstScriptTag = document.getElementsByTagName('script')[0];
+            // firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+            //var ScriptTag = document.getElementById('youtube_api_sctipt_div');
+            //ScriptTag.append(tag);
+            console.log('init youtube api finished');
+        }
+    }
+</script>
+
 @code
 {
     private ClaimsPrincipal User;

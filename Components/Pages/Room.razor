@@ -105,25 +105,6 @@ else if (roomViewState == RoomViewState.NoAccess)
 	<h1>RESTRICTED ACCESS YOU FOOL!</h1>
 }
 
-<script>
-    initAPI();
-
-    function initAPI() {
-        if (typeof YT == 'undefined') {
-            console.log('init youtube api');
-            var tag = document.createElement('script');
-            tag.src = "https://www.youtube.com/iframe_api";
-            var headTag = document.getElementsByTagName('head')[0];
-            headTag.append(tag);
-            // var firstScriptTag = document.getElementsByTagName('script')[0];
-            // firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-            //var ScriptTag = document.getElementById('youtube_api_sctipt_div');
-            //ScriptTag.append(tag);
-            console.log('init youtube api finished');
-        }
-    }
-</script>
-
 @code {
     //First time changing video, it is not set time correctly. This is because video is not fully loaded when correct time is applied
 

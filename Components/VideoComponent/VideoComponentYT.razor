@@ -19,7 +19,7 @@
     [Parameter]
     public bool DoShowControls { get; set; } = true;
 
-    private IJSObjectReference jsModule;
+    private IJSObjectReference JsModule;
 
     public event VideoActionHandler OnVideoProceed;
     public event VideoActionHandler OnVideoPause;
@@ -28,13 +28,13 @@
     {
         if (firstRender)
         {
-            jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "./Components/VideoComponent/VideoComponentYT.razor.js");
+            JsModule = await JS.InvokeAsync<IJSObjectReference>("import", "./Components/VideoComponent/VideoComponentYT.razor.js");
 
             await JS.InvokeVoidAsync("initAPI");
 
-            await jsModule.InvokeVoidAsync("setDotnetReference", DotNetObjectReference.Create(this));
+            await JsModule.InvokeVoidAsync("setDotnetReference", DotNetObjectReference.Create(this));
 
-            await jsModule.InvokeVoidAsync("onYouTubeIframeAPIReady");
+            await JsModule.InvokeVoidAsync("onYouTubeIframeAPIReady");
         }
 
         base.OnAfterRender(firstRender);
@@ -42,22 +42,22 @@
 
     public void Proceed()
     {
-        jsModule.InvokeVoidAsync("ProceedVideo");
+        JsModule.InvokeVoidAsync("ProceedVideo");
     }
 
     public void Pause()
     {
-        jsModule.InvokeVoidAsync("PauseVideo");
+        JsModule.InvokeVoidAsync("PauseVideo");
     }
 
     public void Seek(double time)
     {
-        jsModule.InvokeVoidAsync("SeekVideo", time);
+        JsModule.InvokeVoidAsync("SeekVideo", time);
     }
 
     public void ClearSource()
     {
-        jsModule.InvokeVoidAsync("ClearVideo");
+        JsModule.InvokeVoidAsync("ClearVideo");
     }
 
     public async void InitComponent()
@@ -73,7 +73,7 @@
 
         // Send youtube tag
         DbContext.Videos.Entry(Video).Reload();
-        jsModule.InvokeVoidAsync("LoadVideo", Video.YouTubeTag);
+        JsModule.InvokeVoidAsync("LoadVideo", Video.YouTubeTag);
     }
 
     [JSInvokable]

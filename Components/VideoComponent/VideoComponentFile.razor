@@ -4,157 +4,10 @@
 @implements VideoComponent
 @rendermode InteractiveServer
 
-<video width="320" height="240" id="video_comp"
-    onpause="OnPauseClick()"
-    onplay="OnProceedClick()"
-    src="@Video?.Url">
+<video width="320" height="240" id="video_comp">
         Your browser does not support the video tag.
 </video>
 <button id="play_btn" style="visibility: hidden" onclick="RequestVideoInit()">Play</button>
-
-<script>
-    var UserActions = Object.freeze({
-        ProceedVideo: 0,
-        PauseVideo: 1
-    });
-
-    var DoSendAction = true;
-
-    // DotNet reference holder
-    var dnh = null;
-    function setDotnetReference(dotnetRef) {
-        console.log("received DNR");
-        dnh = dotnetRef;
-    }
-
-    function setVideoLoadedEvent() {
-        video = document.getElementById("video_comp");
-        video.addEventListener("loadedmetadata", function() {
-            console.log('Video metadata loaded. Requesting video init');
-            RequestVideoInit();
-        });
-	}
-
-    function RequestVideoInit() {
-        if (dnh) {
-            dnh.invokeMethodAsync("InitVideo");
-            play_btn.style.visibility = "hidden";
-        }
-    }
-
-    function ClearVideo() {
-        video.src = "";
-        video.load();
-    }
-
-    function ProceedVideo() {
-        DoSendAction = false;
-        video.play();
-    }
-
-    function PauseVideo() {
-        DoSendAction = false;
-        video.pause();
-    }
-
-    function SeekVideo(time) {
-        DoSendAction = false;
-        seekVideo(video, time);
-    }
-
-
-    function OnProceedClick() {
-        SendAction(UserActions.ProceedVideo, video.currentTime);
-    }
-    function OnPauseClick() {
-        SendAction(UserActions.PauseVideo, video.currentTime);
-    }
-
-    function SendAction(action, ...args) {
-        if (dnh == null || DoSendAction == false) {
-			DoSendAction = true;
-            return;
-        }
-
-		console.log("Sending action: " + action + " with args: " + args);
-        dnh.invokeMethodAsync('ReceiveAction', action, args);
-    }
-
-    function initVideo(time, isPlay, doShowControls) {
-        try {
-        console.log("initVideo");
-        console.log(time);
-
-        //DoSendAction = false;
-        console.log(seekVideo(video, time));
-
-        if (isPlay) {
-            DoSendAction = false;
-            var promise = video.play();
-
-            if (promise !== undefined) {
-                promise.then(_ => {
-                    // Autoplay started!
-                    console.log("autoplay");
-                    if (doShowControls)
-                        video.setAttribute("controls", "");
-                }).catch(error => {
-                    // Autoplay was prevented.
-                    // Show a "Play" button so that user can start playback.
-                    console.log("no autoplay!");
-                    play_btn.style.visibility = "visible";
-                });
-            }
-        }
-        else {
-            if (doShowControls)
-                video.setAttribute("controls", "");
-        }
-        }
-        catch (error) { 
-            console.log(error);
-        }
-    }
-
-
-    function seekVideo(videoElement, timeInSeconds) {
-        if (timeInSeconds > videoElement.duration)
-            return false;
-        return new Promise((resolve, reject) => {
-            if (!(videoElement instanceof HTMLVideoElement)) {
-                reject(new Error("Invalid video element."));
-            }
-            if (typeof timeInSeconds !== "number" || timeInSeconds < 0) {
-                reject(new Error("Invalid seek time."));
-            }
-            if (videoElement.readyState < 1) {
-                // Wait until metadata is loaded to know duration
-                videoElement.addEventListener("loadedmetadata", () => {
-                    if (timeInSeconds > videoElement.duration) {
-                        reject(new Error("Seek time exceeds video duration."));
-                    }
-                    videoElement.currentTime = timeInSeconds;
-                }, { once: true });
-            } else {
-                if (timeInSeconds > videoElement.duration) {
-                    reject(new Error("Seek time exceeds video duration."));
-                }
-                videoElement.currentTime = timeInSeconds;
-            }
-
-            // Resolve when seeking is complete
-            videoElement.addEventListener("seeked", () => {
-                resolve(`Seeked to ${timeInSeconds} seconds`);
-            }, { once: true });
-
-            // Optional: handle seek errors
-            videoElement.addEventListener("error", () => {
-                reject(new Error("An error occurred while seeking."));
-            }, { once: true });
-        });
-    }
-
-</script>
 
 @code {
     [Parameter]
@@ -163,34 +16,60 @@
     [Parameter]
     public bool DoShowControls { get; set; } = true;
 
+    private IJSObjectReference JsModule;
+    private string prevUrl;
 
     public event VideoActionHandler OnVideoProceed;
     public event VideoActionHandler OnVideoPause;
 
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            JsModule = await JS.InvokeAsync<IJSObjectReference>("import", "./Components/VideoComponent/VideoComponentFile.razor.js");
+
+            var lDotNetReference = DotNetObjectReference.Create(this);
+            await JsModule.InvokeVoidAsync("setDotnetReference", lDotNetReference);
+        }
+
+        if (Video is not null && JsModule is not null && prevUrl != Video.Url)
+        {
+            await JsModule.InvokeVoidAsync("LoadVideo", Video.Url);
+            prevUrl = Video.Url;
+        }
+
+		await base.OnAfterRenderAsync(firstRender);
+	}
+
 
     public void Proceed()
     {
-        JS.InvokeVoidAsync("ProceedVideo");
+        JsModule.InvokeVoidAsync("ProceedVideo");
     }
 
     public void Pause()
     {
-        JS.InvokeVoidAsync("PauseVideo");
+        JsModule.InvokeVoidAsync("PauseVideo");
     }
 
     public void Seek(double time)
     {
-        JS.InvokeVoidAsync("SeekVideo", time);
+        JsModule.InvokeVoidAsync("SeekVideo", time);
     }
 
     public void ClearSource()
     {
-        JS.InvokeVoidAsync("ClearVideo");
+        JsModule.InvokeVoidAsync("ClearVideo");
     }
 
     public void InitComponent()
     {
-        JS.InvokeVoidAsync("setVideoLoadedEvent");
+        
     }
 
     /// <summary>
@@ -199,20 +78,7 @@
     [JSInvokable]
     public void InitVideo()
     {
-        JS.InvokeVoidAsync("initVideo", Video?.CurrentTime, Video?.IsPlaying, DoShowControls);
-    }
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-        {
-            var lDotNetReference = DotNetObjectReference.Create(this);
-            JS.InvokeVoidAsync("setDotnetReference", lDotNetReference);
-
-            InvokeAsync(StateHasChanged);
-        }
-
-        base.OnAfterRender(firstRender);
+        JsModule.InvokeVoidAsync("initVideo", Video?.CurrentTime, Video?.IsPlaying, DoShowControls);
     }
 
 
