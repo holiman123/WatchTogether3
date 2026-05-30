@@ -14,7 +14,7 @@ export function setDotnetReference(dotnetRef) {
 }
 
 var player;
-export function onYouTubeIframeAPIReady() {
+export function CreateYtPlayer() {
     player = new YT.Player('player_div', {
         height: '390',
         width: '640',

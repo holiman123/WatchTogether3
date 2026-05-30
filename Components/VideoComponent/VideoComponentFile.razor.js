@@ -7,7 +7,7 @@ var UserActions = Object.freeze({
 
 var DoSendAction = true;
 
-var video;
+var video = document.getElementById("video_comp");
 var play_btn = document.getElementById("play_btn");
 
 // DotNet reference holder
@@ -17,16 +17,18 @@ export function setDotnetReference(dotnetRef) {
     dnh = dotnetRef;
 }
 
-export function LoadVideo(src) {
-    video = document.getElementById("video_comp");
+export function LoadVideo(src, time) {
+    play_btn.addEventListener("click", RequestVideoInit);
 
     video.addEventListener("loadedmetadata", function () {
-        console.log('Video metadata loaded. Requesting video init');
-        RequestVideoInit();
+        console.log('Video metadata loaded');
+        // RequestVideoInit();
     });
 
     video.src = src;
     video.load();
+
+    SeekVideo(time);
 
     video.addEventListener("play", OnProceedClick);
     video.addEventListener("pause", OnPauseClick);
@@ -82,37 +84,17 @@ function SendAction(action, ...args) {
 }
 
 export function initVideo(time, isPlay, doShowControls) {
-    try {
-        console.log("initVideo");
+    console.log("initVideo");
 
-        seekVideo(video, time);
+    seekVideo(video, time);
 
-        if (isPlay) {
-            DoSendAction = false;
-            var promise = video.play();
-
-            if (promise !== undefined) {
-                promise.then(_ => {
-                    // Autoplay started!
-                    console.log("autoplay");
-                    if (doShowControls)
-                        video.setAttribute("controls", "");
-                }).catch(error => {
-                    // Autoplay was prevented.
-                    // Show a "Play" button so that user can start playback.
-                    console.log("no autoplay!");
-                    play_btn.style.visibility = "visible";
-                });
-            }
-        }
-        else {
-            if (doShowControls)
-                video.setAttribute("controls", "");
-        }
+    if (isPlay) {
+        DoSendAction = false;
+        var promise = video.play();
     }
-    catch (error) {
-        console.log(error);
-    }
+
+    if (doShowControls)
+        video.setAttribute("controls", "");
 }
 
 

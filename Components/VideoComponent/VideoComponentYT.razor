@@ -1,4 +1,4 @@
-﻿
+﻿@rendermode InteractiveServer
 @implements VideoComponent
 
 @using System.Text.Json
@@ -34,7 +34,7 @@
 
             await JsModule.InvokeVoidAsync("setDotnetReference", DotNetObjectReference.Create(this));
 
-            await JsModule.InvokeVoidAsync("onYouTubeIframeAPIReady");
+            await JsModule.InvokeVoidAsync("CreateYtPlayer");
         }
 
         base.OnAfterRender(firstRender);

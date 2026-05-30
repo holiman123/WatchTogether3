@@ -1,13 +1,16 @@
-﻿@using System.Text.Json
-@using WatchTogether3.Data
-@inject IJSRuntime JS
+﻿@rendermode InteractiveServer
 @implements VideoComponent
-@rendermode InteractiveServer
+
+@using System.Text.Json
+@using WatchTogether3.Data
+
+@inject IJSRuntime JS
+@inject ApplicationDbContext DbContext
 
 <video width="320" height="240" id="video_comp">
         Your browser does not support the video tag.
 </video>
-<button id="play_btn" style="visibility: hidden" onclick="RequestVideoInit()">Play</button>
+<button id="play_btn" style="visibility: visible">Play</button>
 
 @code {
     [Parameter]
@@ -39,12 +42,14 @@
 
         if (Video is not null && JsModule is not null && prevUrl != Video.Url)
         {
-            await JsModule.InvokeVoidAsync("LoadVideo", Video.Url);
+            await JsModule.InvokeVoidAsync("LoadVideo", Video.Url, Video.CurrentTime);
             prevUrl = Video.Url;
+
+            await InvokeAsync(StateHasChanged);
         }
 
-		await base.OnAfterRenderAsync(firstRender);
-	}
+        await base.OnAfterRenderAsync(firstRender);
+    }
 
 
     public void Proceed()
@@ -69,7 +74,7 @@
 
     public void InitComponent()
     {
-        
+
     }
 
     /// <summary>
@@ -78,6 +83,11 @@
     [JSInvokable]
     public void InitVideo()
     {
+        if (Video is null)
+            return;
+
+        DbContext.Videos.Entry(Video).Reload();
+
         JsModule.InvokeVoidAsync("initVideo", Video?.CurrentTime, Video?.IsPlaying, DoShowControls);
     }
 
