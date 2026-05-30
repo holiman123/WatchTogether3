@@ -1,5 +1,6 @@
 ﻿@rendermode InteractiveServer
 @implements VideoComponent
+@implements IDisposable
 
 @using System.Text.Json
 @using WatchTogether3.Data
@@ -117,4 +118,10 @@
                 }
         }
     }
+
+	public void Dispose()
+	{
+		ClearSource();
+		JsModule?.DisposeAsync();
+	}
 }

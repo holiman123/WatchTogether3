@@ -31,6 +31,7 @@ export function CreateYtPlayer() {
 }
 
 export function onPlayerReady(event) {
+    console.log("PLayer ready");
     // Request youtube tag
     dnr.invokeMethodAsync("LoadYtTag");
 }
@@ -48,7 +49,7 @@ export function onPlayerStateChange(event) {
         prevEvents[i + 1] = prevEvents[i];
     }
     prevEvents[0] = event.data;
-    // console.log("State changed: " + prevEvents);
+    console.log("State changed: " + prevEvents);
 
 
     if (prevEvents[0] == 1 &&
@@ -113,6 +114,6 @@ export function SendAction(action, ...args) {
         return;
     }
 
-    // console.log("Sending action: " + action + " with args: " + args);
+    console.log("Sending action: " + action + " with args: " + args);
     dnr.invokeMethodAsync('ReceiveAction', action, args);
 }

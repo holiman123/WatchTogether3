@@ -6,9 +6,10 @@ var UserActions = Object.freeze({
 });
 
 var DoSendAction = true;
+var VideoInited = false;
 
-var video = document.getElementById("video_comp");
-var play_btn = document.getElementById("play_btn");
+var video;
+var play_btn;
 
 // DotNet reference holder
 var dnh = null;
@@ -18,6 +19,12 @@ export function setDotnetReference(dotnetRef) {
 }
 
 export function LoadVideo(src, time) {
+    video = document.getElementById("video_comp");
+    play_btn = document.getElementById("play_btn");
+    VideoInited = false;
+
+    console.log("loading video file: " + src);
+
     play_btn.addEventListener("click", RequestVideoInit);
 
     video.addEventListener("loadedmetadata", function () {
@@ -28,7 +35,7 @@ export function LoadVideo(src, time) {
     video.src = src;
     video.load();
 
-    SeekVideo(time);
+    seekVideo(video, time);
 
     video.addEventListener("play", OnProceedClick);
     video.addEventListener("pause", OnPauseClick);
@@ -47,22 +54,25 @@ export function ClearVideo() {
 }
 
 export function ProceedVideo() {
-    if (video.paused) {
+    if (VideoInited && video.paused) {
         DoSendAction = false;
         video.play();
     }
 }
 
 export function PauseVideo() {
-    if (!video.paused) {
+    if (VideoInited && !video.paused) {
         DoSendAction = false;
         video.pause();
     }
 }
 
 export function SeekVideo(time) {
-    DoSendAction = false;
-    seekVideo(video, time);
+    if (VideoInited) {
+        if (!video.paused)
+            DoSendAction = false;
+        seekVideo(video, time);
+    }
 }
 
 
@@ -85,9 +95,11 @@ function SendAction(action, ...args) {
 
 export function initVideo(time, isPlay, doShowControls) {
     console.log("initVideo");
+    VideoInited = true;
 
     seekVideo(video, time);
 
+    console.log(isPlay);
     if (isPlay) {
         DoSendAction = false;
         var promise = video.play();
@@ -95,6 +107,7 @@ export function initVideo(time, isPlay, doShowControls) {
 
     if (doShowControls)
         video.setAttribute("controls", "");
+
 }
 
 

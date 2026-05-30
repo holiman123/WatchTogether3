@@ -21,6 +21,8 @@
 
     private IJSObjectReference JsModule;
 
+    private string prevTag;
+
     public event VideoActionHandler OnVideoProceed;
     public event VideoActionHandler OnVideoPause;
 
@@ -35,6 +37,13 @@
             await JsModule.InvokeVoidAsync("setDotnetReference", DotNetObjectReference.Create(this));
 
             await JsModule.InvokeVoidAsync("CreateYtPlayer");
+        }
+
+        if (Video is not null && prevTag != Video.YouTubeTag)
+        {
+            LoadYtTag();
+
+            prevTag = Video.YouTubeTag;
         }
 
         base.OnAfterRender(firstRender);
