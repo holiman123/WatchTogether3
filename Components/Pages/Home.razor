@@ -19,7 +19,7 @@
 <PageTitle>Home</PageTitle>
 
 <div class="top">
-    <div >
+    <div class="search-bar-div">
         <InputText class="search-bar" @bind-Value="roomSearch" @oninput="(e) => { roomSearch = e.Value.ToString(); SearchRooms(); }" />
         <AuthorizeView>
             <Authorized>
@@ -28,78 +28,92 @@
         </AuthorizeView>
     </div>
 
-    <div class="mark">
+    @* <div class="mark">
         Created by
         <a href="https://www.linkedin.com/in/daniil-luchytskyi-7ba6b9391?utm_source=share_via&utm_content=profile&utm_medium=member_android">
             Daniil Luchytskyi
         </a>
         with lo... love?
-    </div>
+    </div> *@
 </div>
 
-<AuthorizeView>
-    <Authorized>
-        <NavLink class="btn btn-primary" href="/CreateRoom">Create Room</NavLink>
-    </Authorized>
-</AuthorizeView>
-
 <div class="rooms">
-    @foreach (Data.Room room in roomSearchResults)
-    {
-        if (!FriendsOnly || (User is not null && User.Friendships
-                                    .Where(f => f.Status == FriendshipStatus.Accepted)
-                                    .Select(f => f.Friend)
-                                    .Contains(room.Owner)))
-        {
-            <div class="room">
-                <p>@room.Name</p>
-                @if (room.CurrentVideo is null)
-                {
-                    <div class="no-image">
-                        STILL DECIDING
-                    </div>
-                }
-                else
-                {
-                    if (room.CurrentVideo.SourceType == VideoSourceType.Local)
-                    {
-                        <img src="@($"api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")">
-					}
-					else
-					{
-                        <img src="@($"https://img.youtube.com/vi/{room.CurrentVideo.YouTubeId}/hqdefault.jpg")">
-                    }
-                }
-                <div class="room-data">
-                    <p>by @room.Owner.UserName</p>
+    <AuthorizeView>
+        <Authorized>
+            <div class="rooms-block">
+                <div class="rooms-top">
+                    <p>My rooms</p>
+                    <NavLink class="" href="/CreateRoom">Create</NavLink>
+                </div>
+            </div>
+        </Authorized>
+    </AuthorizeView>
 
-                    <div>
-                        @if (RoomsParticipants.TryGetValue(room.Id, out List<ApplicationUser> users))
+    <div class="rooms-block">
+        <div class="rooms-top">
+            <p>Public rooms</p>
+        </div>
+        <div class="rooms-list">
+            @foreach (Data.Room room in roomSearchResults)
+            {
+                if (!FriendsOnly || (User is not null && User.Friendships
+                                            .Where(f => f.Status == FriendshipStatus.Accepted)
+                                            .Select(f => f.Friend)
+                                            .Contains(room.Owner)))
+                {
+                    <div class="room">
+                        <p>@room.Name</p>
+                        @if (room.CurrentVideo is null)
                         {
-                            <p>@(users.Count())</p>
+                            <div class="no-image">
+                                STILL DECIDING
+                            </div>
                         }
                         else
                         {
-                            <p>0</p>
+                            <div class="img-div">
+                                @if (room.CurrentVideo.SourceType == VideoSourceType.Local)
+                                {
+                                    <img src="@($"api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")">
+					            }
+					            else
+					            {
+                                    <img src="@($"https://img.youtube.com/vi/{room.CurrentVideo.YouTubeId}/hqdefault.jpg")">
+                                }
+                            </div>
+                        }
+                        <div class="room-data">
+                            <p>by @room.Owner.UserName</p>
+
+                            <div>
+                                @if (RoomsParticipants.TryGetValue(room.Id, out List<ApplicationUser> users))
+                                {
+                                    <p>@(users.Count())</p>
+                                }
+                                else
+                                {
+                                    <p>0</p>
+                                }
+                            </div>
+                        </div>
+                        <p>watching @(room.CurrentVideo?.FriendlyName ?? "nothing 8_8")</p>
+                
+                        @if (room.EnterRoomPrivacyLevel == PrivacyLevel.Password)
+                        {
+                            if (!PasswordInputs.ContainsKey(room.Id))
+                                PasswordInputs[room.Id] = "";
+                            <input @bind="PasswordInputs[room.Id]"/>
+                            <button @onclick="() => GoToRoom(room, PasswordInputs[room.Id])">Join Room</button>
+                        }
+                        else
+                        {
+                            <button @onclick="() => GoToRoom(room)">Join Room</button>
                         }
                     </div>
-                </div>
-                <p>watching @(room.CurrentVideo?.FriendlyName ?? "nothing 8_8")</p>
-                
-                @if (room.EnterRoomPrivacyLevel == PrivacyLevel.Password)
-                {
-                    if (!PasswordInputs.ContainsKey(room.Id))
-                        PasswordInputs[room.Id] = "";
-                    <input @bind="PasswordInputs[room.Id]"/>
-                    <button @onclick="() => GoToRoom(room, PasswordInputs[room.Id])">Join Room</button>
                 }
-                else
-                {
-                    <button @onclick="() => GoToRoom(room)">Join Room</button>
-                }
-            </div>
-        }
-    }
+            }
+        </div>
+    </div>
 </div>
 
 <script>

@@ -1,26 +1,4 @@
 
-.body-div {
-    display: flex;
-    margin-right: 197px;
-    flex-direction: column;
-}
-
-.nav-bar {
-    position: fixed;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 150px;
-    padding: 20px;
-    background: var(--bg-primary);
-    color: var(--text-secondary);
-    display: flex;
-    flex-direction: column;
-    border-left-style: dotted;
-    border-left-width: 4px;
-    border-left-color: var(--accent-primary);
-}
-
 #blazor-error-ui {
     color-scheme: light only;
     background: lightyellow;

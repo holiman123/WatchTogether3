@@ -11,9 +11,10 @@
 
 body {
     margin: 0;
-    background: var(--bg-primary);
+    background-color: #0E0713;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 16px;
+    color: #AFAFAF;
 }
 
 
@@ -27,23 +28,21 @@ label {
 
 a {
     text-decoration: none;
-    color: var(--text-secondary);
-    background: var(--accent-secondary);
-    border-radius: 5px;
-    padding: 4px 6px 4px 6px;
-    margin: 2px;
-    transition: 100ms;
+    color: #AFAFAF;
+    background: #0E0713;
+    border-radius: 8px;
+    transition: 200ms;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+    padding: 1px 15px 3px 15px;
+    box-shadow: 0px 0px 18px 9px rgba(131,0,61,0.63);
 }
 
 a:hover {
-    transition: 100ms;
-    background: var(--accent-hover);
-}
-
-.search-bar {
-    font-size: 24px;
-    padding: 5px;
-    width: 500px;
+    transition: 200ms;
+    background: #1d000f;
 }
 
 /*.valid.modified:not([type=checkbox]) {
@@ -64,9 +63,9 @@ a:hover {
     color: white;
 }
 
-    .blazor-error-boundary::after {
-        content: "An error has occurred."
-    }
+.blazor-error-boundary::after {
+    content: "An error has occurred."
+}
 
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
@@ -79,4 +78,17 @@ a:hover {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
+}
+
+
+
+.search-bar {
+    font-size: 24px;
+    padding: 5px;
+    width: 500px;
+    color: #AFAFAF;
+    border-radius: 7px;
+    border: 3px solid transparent;
+    background: linear-gradient(#0E0713, #0E0713) padding-box, linear-gradient(120deg, #830042 0%, #1d000f 33%, #1D000F 66%, #830042 100%) border-box;
+    box-shadow: 0px 0px 18px 9px rgba(131,0,61,0.63);
 }
