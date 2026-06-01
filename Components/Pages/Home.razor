@@ -61,7 +61,14 @@
                 }
                 else
                 {
-                    <img src="@($"api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")">
+                    if (room.CurrentVideo.SourceType == VideoSourceType.Local)
+                    {
+                        <img src="@($"api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")">
+					}
+					else
+					{
+                        <img src="@($"https://img.youtube.com/vi/{room.CurrentVideo.YouTubeTag}/hqdefault.jpg")">
+                    }
                 }
                 <div class="room-data">
                     <p>by @room.Owner.UserName</p>
