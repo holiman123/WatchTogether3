@@ -38,7 +38,7 @@ else if (roomViewState == RoomViewState.FullAccess)
     <InputFile id="fileUpload" OnChange="LoadFile" style="display:none" />
     
     <hr>
-    <InputText @bind-Value="tempYTtag"/>
+    <InputText @bind-Value="tempYTurl"/>
     <button @onclick="AddYouTubeVideo">Add YouTube Video</button>
 
     @foreach (VideoFile video in RoomData.UploadedVideos.OrderBy(v => v.Order))
@@ -129,7 +129,7 @@ else if (roomViewState == RoomViewState.NoAccess)
 
     private string tempNewVideoName { get; set; } = string.Empty;
 
-    private string tempYTtag { get; set; } = string.Empty;
+    private string tempYTurl { get; set; } = string.Empty;
 
     private bool VideoSourceTypeChanged = false;
 
@@ -261,24 +261,21 @@ else if (roomViewState == RoomViewState.NoAccess)
 
             await InvokeAsync(StateHasChanged);
 
-            if (CanControlVideo)
+            if (videoTt is not null && CanControlVideo)
             {
                 videoTt.OnVideoProceed += SendVideoProceed;
                 videoTt.OnVideoPause += SendVideoPause;
             }
-
-            videoTt?.InitComponent();
         }
 
         if (VideoSourceTypeChanged)
         {
-            if (CanControlVideo)
+            if (videoTt is not null && CanControlVideo)
             {
                 videoTt?.OnVideoProceed += SendVideoProceed;
                 videoTt?.OnVideoPause += SendVideoPause;
             }
 
-            videoTt?.InitComponent();
             VideoSourceTypeChanged = false;
         }
     }
@@ -371,14 +368,14 @@ else if (roomViewState == RoomViewState.NoAccess)
 
     private void AddYouTubeVideo()
     {
-        if (String.IsNullOrWhiteSpace(tempYTtag))
+        if (String.IsNullOrWhiteSpace(tempYTurl))
             return;
 
         VideoFile videoFile = new VideoFile
 		{
-			FriendlyName = tempYTtag,
+			FriendlyName = tempYTurl,
 			SourceType = VideoSourceType.YouTube,
-			YouTubeTag = tempYTtag,
+			YouTubeUrl = tempYTurl,
 			Room = RoomData,
 			UploadDate = DateTime.Now
 		};
@@ -388,7 +385,7 @@ else if (roomViewState == RoomViewState.NoAccess)
         DbContext.SaveChanges();
 
         hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
-        tempYTtag = String.Empty;
+        tempYTurl = String.Empty;
 
         InvokeAsync(StateHasChanged);
     }
@@ -452,7 +449,8 @@ else if (roomViewState == RoomViewState.NoAccess)
         RoomData.UploadedVideos.Remove(video);
         if (DbContext.SaveChanges() != 0)
         {
-            File.Delete(video.Path);
+            if (video.SourceType == VideoSourceType.Local)
+                File.Delete(video.Path);
             hub.SendAsync("RoomDataChanged", roomId, RoomData);
         }
     }

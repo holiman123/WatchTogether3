@@ -10,7 +10,7 @@ public class VideoFile : OrderableItem
     [Key]
     public int Id { get; set; }
     public VideoSourceType SourceType { get; set; }
-    public string YouTubeTag { get; set; } = string.Empty;
+    public string YouTubeUrl { get; set; } = string.Empty;
     public string Url { get; set; } = string.Empty;
     public string FriendlyName { get; set; } = string.Empty;
     public string FileName { get; set; } = string.Empty;
@@ -34,6 +34,18 @@ public class VideoFile : OrderableItem
         }
 
         set => field = value;
+    }
+
+    [NotMapped]
+    public string YouTubeId
+    { 
+        get
+        {
+            if (String.IsNullOrEmpty(YouTubeUrl))
+                return string.Empty;
+
+            return YouTubeUrl.Split('/', '=').Last();
+        }
     }
 
     /// <summary>

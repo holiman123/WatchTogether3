@@ -42,7 +42,7 @@
 				FileName = "masha.mp4",
 				Url = "api/Videos/get/masha.mp4",
 				SourceType = VideoSourceType.Local,
-				YouTubeTag = "Ty03SgAgsfg",
+				YouTubeUrl = "https://www.youtube.com/watch?v=7cc1o1H2xbI",
 				CurrentTime = 1,
 				LastPlayTime = DateTime.Now,
 				IsPlaying = true,
@@ -61,8 +61,6 @@
 				lastAction = $"Video paused at {time} seconds"; 
 				InvokeAsync(StateHasChanged); 
 			};
-
-			videoComponent.InitComponent();
 
 			InvokeAsync(StateHasChanged);
 		}

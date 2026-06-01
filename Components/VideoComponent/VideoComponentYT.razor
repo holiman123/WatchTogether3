@@ -21,7 +21,7 @@
 
     private IJSObjectReference JsModule;
 
-    private string prevTag;
+    private string prevUrl;
 
     public event VideoActionHandler OnVideoProceed;
     public event VideoActionHandler OnVideoPause;
@@ -39,11 +39,11 @@
             await JsModule.InvokeVoidAsync("CreateYtPlayer");
         }
 
-        if (Video is not null && prevTag != Video.YouTubeTag)
+        if (Video is not null && prevUrl != Video.YouTubeUrl)
         {
             LoadYtTag();
 
-            prevTag = Video.YouTubeTag;
+            prevUrl = Video.YouTubeUrl;
         }
 
         base.OnAfterRender(firstRender);
@@ -69,11 +69,6 @@
         JsModule.InvokeVoidAsync("ClearVideo");
     }
 
-    public async void InitComponent()
-    {
-
-    }
-
     [JSInvokable]
     public void LoadYtTag()
     {
@@ -82,7 +77,7 @@
 
         // Send youtube tag
         DbContext.Videos.Entry(Video).Reload();
-        JsModule.InvokeVoidAsync("LoadVideo", Video.YouTubeTag);
+        JsModule.InvokeVoidAsync("LoadVideo", Video.YouTubeId);
     }
 
     [JSInvokable]

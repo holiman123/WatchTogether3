@@ -31,14 +31,14 @@ export function CreateYtPlayer() {
 }
 
 export function onPlayerReady(event) {
-    console.log("PLayer ready");
+    console.log("Player ready");
     // Request youtube tag
     dnr.invokeMethodAsync("LoadYtTag");
 }
 
-export function LoadVideo(tag) {
-    player.cueVideoById(tag);
-    console.log("Video loaded: " + tag);
+export function LoadVideo(id) {
+    player.cueVideoById(id);
+    console.log("Video loaded: " + id);
 }
 
 var prevEventPlayerTime = null;

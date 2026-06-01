@@ -27,5 +27,4 @@ public interface VideoComponent
     public void Pause();
     public void Seek(double time);
     public void ClearSource();
-    public void InitComponent();
 }
