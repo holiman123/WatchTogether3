@@ -61,54 +61,44 @@
                                             .Select(f => f.Friend)
                                             .Contains(room.Owner)))
                 {
-                    <div class="room">
-                        <p>@room.Name</p>
+                    <div class="room" @onclick="() => GoToRoom(room)">
                         @if (room.CurrentVideo is null)
                         {
+                            <div class="no-image-blur"></div>
                             <div class="no-image">
                                 STILL DECIDING
                             </div>
                         }
                         else
                         {
-                            <div class="img-div">
-                                @if (room.CurrentVideo.SourceType == VideoSourceType.Local)
-                                {
-                                    <img src="@($"api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")">
-					            }
-					            else
-					            {
-                                    <img src="@($"https://img.youtube.com/vi/{room.CurrentVideo.YouTubeId}/hqdefault.jpg")">
-                                }
-                            </div>
+                            @if (room.CurrentVideo.SourceType == VideoSourceType.Local)
+                            {
+                                <img class="image-blur" src="@($"api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")">
+                                <div class="image-window">
+                                    <img class="image" src="@($"api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")">
+                                </div>
+					        }
+					        else
+					        {
+                                <img class="image-blur" src="@($"https://img.youtube.com/vi/{room.CurrentVideo.YouTubeId}/hqdefault.jpg")">
+                                <div class="image-window">
+                                    <img class="image" src="@($"https://img.youtube.com/vi/{room.CurrentVideo.YouTubeId}/hqdefault.jpg")">
+                                </div>
+                            }
+                            <div class="img-shadow"/>
                         }
-                        <div class="room-data">
-                            <p>by @room.Owner.UserName</p>
-
-                            <div>
-                                @if (RoomsParticipants.TryGetValue(room.Id, out List<ApplicationUser> users))
-                                {
-                                    <p>@(users.Count())</p>
-                                }
-                                else
-                                {
-                                    <p>0</p>
-                                }
-                            </div>
+                        <label class="room-name">@room.Name</label>
+                        <div class="room-footer">
+                            <label class="room-auth">by @room.Owner.UserName</label>
+                            @if (RoomsParticipants.TryGetValue(room.Id, out List<ApplicationUser> users))
+                            {
+                                <label class="room-viewers">@(users.Count())</label>
+                            }
+                            else
+                            {
+                                <label class="room-viewers">0</label>
+                            }
                         </div>
-                        <p>watching @(room.CurrentVideo?.FriendlyName ?? "nothing 8_8")</p>
-                
-                        @if (room.EnterRoomPrivacyLevel == PrivacyLevel.Password)
-                        {
-                            if (!PasswordInputs.ContainsKey(room.Id))
-                                PasswordInputs[room.Id] = "";
-                            <input @bind="PasswordInputs[room.Id]"/>
-                            <button @onclick="() => GoToRoom(room, PasswordInputs[room.Id])">Join Room</button>
-                        }
-                        else
-                        {
-                            <button @onclick="() => GoToRoom(room)">Join Room</button>
-                        }
                     </div>
                 }
             }
