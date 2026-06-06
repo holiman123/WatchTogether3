@@ -13,7 +13,7 @@ body {
     margin: 0;
     background-color: #0E0713;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 16px;
+    font-size: 20px;
     color: #AFAFAF;
 }
 
@@ -29,6 +29,11 @@ label {
 a {
     text-decoration: none;
     color: #AFAFAF;
+}
+
+.button {
+    text-decoration: none;
+    color: #AFAFAF;
     background: #0E0713;
     border-radius: 8px;
     transition: 200ms;
@@ -40,9 +45,10 @@ a {
     box-shadow: 0px 0px 18px 9px rgba(131,0,61,0.63);
 }
 
-a:hover {
+.button:hover {
     transition: 200ms;
-    background: #1d000f;
+    background: rgba(131,0,61,0.63);
+    box-shadow: none;
 }
 
 /*.valid.modified:not([type=checkbox]) {

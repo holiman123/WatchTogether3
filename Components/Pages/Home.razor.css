@@ -22,9 +22,48 @@
         bottom: 0;
         margin-bottom: 30px;
         margin-top: 30px;
-        justify-content: space-evenly;
+        justify-content: space-between;
         align-items: center;
         color: var(--text-primary);
+    }
+
+    .top .logo {
+        position: relative;
+        width: 100px;
+        padding: 0 0 0 30px;
+    }
+
+    .top .logo .logo-blur {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        background-color: #830042;
+        filter: blur(60px);
+        transition: 200ms;
+    }
+
+    .top .logo .text-1 {
+        margin-bottom: 100px;
+    }
+
+    .top .logo .text-2 {
+        color: #830042;
+    }
+
+    .top .logo .text-3 {
+        color: #830042;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .top .logo:hover .logo-blur {
+        background-color: transparent;
+    }
+
+    .top .search-bar-div {
+        margin: auto;
     }
 
     .rooms {

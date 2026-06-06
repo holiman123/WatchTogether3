@@ -19,6 +19,13 @@
 <PageTitle>Home</PageTitle>
 
 <div class="top">
+    <a href="/" class="logo">
+        <div class="logo-blur"></div>
+        <label class="text-1">Watch</label>
+        <label class="text-2">Together</label>
+        <label class="text-3">3</label>
+    </a>
+
     <div class="search-bar-div">
         <InputText class="search-bar" @bind-Value="roomSearch" @oninput="(e) => { roomSearch = e.Value.ToString(); SearchRooms(); }" />
         <AuthorizeView>
@@ -43,7 +50,7 @@
             <div class="rooms-block">
                 <div class="rooms-top">
                     <p>My rooms</p>
-                    <NavLink class="" href="/CreateRoom">Create</NavLink>
+                    <NavLink class="button" href="/CreateRoom">Create</NavLink>
                 </div>
             </div>
         </Authorized>
