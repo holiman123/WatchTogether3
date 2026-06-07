@@ -51,6 +51,43 @@ a {
     box-shadow: none;
 }
 
+
+.logo {
+    position: absolute;
+    width: 100px;
+    top: 20px;
+    left: 20px;
+}
+
+.logo .logo-blur {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-color: #830042;
+    filter: blur(60px);
+    transition: 200ms;
+}
+
+.logo .text-1 {
+    margin-bottom: 100px;
+}
+
+.logo .text-2 {
+    color: #830042;
+}
+
+.logo .text-3 {
+    color: #830042;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.logo:hover .logo-blur {
+    background-color: transparent;
+}
+
 /*.valid.modified:not([type=checkbox]) {
     outline: 1px solid #26b050;
 }
