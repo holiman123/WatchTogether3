@@ -12,6 +12,18 @@
             <label class="text-3">3</label>
         </a>
 
+        <a href="/Account/Manage" class="account">
+            <div class="account-blur"></div>
+            <AuthorizeView>
+                <Authorized>
+                    <label>@($"Hi, {User.Identity?.Name}! 0ᴗ0ﾉﾞ")</label>
+                </Authorized>
+                <NotAuthorized>
+                    <label>LOG IN</label>
+                </NotAuthorized>
+            </AuthorizeView>
+        </a>
+
         @Body
 
         <div id="blazor-error-ui" data-nosnippet>
@@ -27,8 +39,6 @@
                 Hi @User.Identity.Name 0ᴗ0ﾉﾞ
             </Authorized>
         </AuthorizeView>
-
-        <NavLink href="/Account/Manage" class="button">Account</NavLink>
 
         <AuthorizeView>
             <Authorized>

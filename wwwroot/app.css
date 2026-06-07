@@ -88,6 +88,31 @@ a {
     background-color: transparent;
 }
 
+
+.account {
+    position: absolute;
+    width: auto;
+    height: 30px;
+    top: 40px;
+    right: 20px;
+}
+
+.account .account-blur {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-color: #830042;
+    filter: blur(50px);
+    transition: 200ms;
+    
+}
+
+.account:hover .account-blur {
+    background-color: transparent;
+}
+
 /*.valid.modified:not([type=checkbox]) {
     outline: 1px solid #26b050;
 }
