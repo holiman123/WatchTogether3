@@ -29,16 +29,74 @@
     </div>
 </div>
 
-<div class="rooms">
-    <AuthorizeView>
-        <Authorized>
-            <div class="rooms-block">
-                <div class="rooms-top">
-                    <p>My rooms</p>
-                    <NavLink class="button" href="/CreateRoom">Create</NavLink>
+<div class="bottom">
+    <div class="rooms">
+        <AuthorizeView>
+            <Authorized>
+                <div class="rooms-block">
+                    <div class="block-top">
+                        <p>My rooms</p>
+                        <NavLink class="button" href="/CreateRoom">Create</NavLink>
+                    </div>
+                    <div class="rooms-list">
+                        @foreach (Data.Room room in MyRooms)
+                        {
+                            <div class="room" @onclick="() => GoToRoom(room)">
+                                @if (room.CurrentVideo is null)
+                                {
+                                    <div class="no-image-blur"></div>
+                                    <div class="no-image">
+                                        STILL DECIDING
+                                    </div>
+                                }
+                                else
+                                {
+                                    @if (room.CurrentVideo.SourceType == VideoSourceType.Local)
+                                    {
+                                        <img class="image-blur" src="@($"api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")">
+                                        <div class="image-window">
+                                            <img class="image" src="@($"api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")">
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <img class="image-blur" src="@($"https://img.youtube.com/vi/{room.CurrentVideo.YouTubeId}/hqdefault.jpg")">
+                                        <div class="image-window">
+                                            <img class="image" src="@($"https://img.youtube.com/vi/{room.CurrentVideo.YouTubeId}/hqdefault.jpg")">
+                                        </div>
+                                    }
+                                    <div class="img-shadow" />
+                                }
+                                <p class="room-name">@room.Name</p>
+                                <div class="room-footer">
+                                    <p class="room-auth">by @room.Owner.UserName</p>
+                                    @if (RoomsParticipants.TryGetValue(room.Id, out List<ApplicationUser> users))
+                                    {
+                                        <p class="room-viewers">@(users.Count())</p>
+                                    }
+                                    else
+                                    {
+                                        <p class="room-viewers">0</p>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
                 </div>
-                <div class="rooms-list">
-                    @foreach (Data.Room room in MyRooms)
+            </Authorized>
+        </AuthorizeView>
+
+        <div class="rooms-block">
+            <div class="block-top">
+                <p>Public rooms</p>
+            </div>
+            <div class="rooms-list">
+                @foreach (Data.Room room in roomSearchResults)
+                {
+                    if (!FriendsOnly || (User is not null && User.Friendships
+                                                .Where(f => f.Status == FriendshipStatus.Accepted)
+                                                .Select(f => f.Friend)
+                                                .Contains(room.Owner)))
                     {
                         <div class="room" @onclick="() => GoToRoom(room)">
                             @if (room.CurrentVideo is null)
@@ -56,90 +114,50 @@
                                     <div class="image-window">
                                         <img class="image" src="@($"api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")">
                                     </div>
-                                }
-                                else
-                                {
+					            }
+					            else
+					            {
                                     <img class="image-blur" src="@($"https://img.youtube.com/vi/{room.CurrentVideo.YouTubeId}/hqdefault.jpg")">
                                     <div class="image-window">
                                         <img class="image" src="@($"https://img.youtube.com/vi/{room.CurrentVideo.YouTubeId}/hqdefault.jpg")">
                                     </div>
                                 }
-                                <div class="img-shadow" />
+                                <div class="img-shadow"/>
                             }
-                            <label class="room-name">@room.Name</label>
+                            <p class="room-name">@room.Name</p>
                             <div class="room-footer">
-                                <label class="room-auth">by @room.Owner.UserName</label>
+                                <p class="room-auth">by @room.Owner.UserName</p>
                                 @if (RoomsParticipants.TryGetValue(room.Id, out List<ApplicationUser> users))
                                 {
-                                    <label class="room-viewers">@(users.Count())</label>
+                                    <p class="room-viewers">@(users.Count())</p>
                                 }
                                 else
                                 {
-                                    <label class="room-viewers">0</label>
+                                    <p class="room-viewers">0</p>
                                 }
                             </div>
                         </div>
                     }
+                }
+            </div>
+        </div>
+    </div>
+    <AuthorizeView>
+        <Authorized>
+            <div class="friends">
+                <div class="block-top">
+                    <p>Friends</p>
                 </div>
+                <div class="friends-list">
+                    @foreach(Friendship friendship in User?.Friendships)
+                    {
+                        <p>f</p>
+                    }
+                </div>
+                <a href="Account/Friends">Add</a>
             </div>
         </Authorized>
     </AuthorizeView>
-
-    <div class="rooms-block">
-        <div class="rooms-top">
-            <p>Public rooms</p>
-        </div>
-        <div class="rooms-list">
-            @foreach (Data.Room room in roomSearchResults)
-            {
-                if (!FriendsOnly || (User is not null && User.Friendships
-                                            .Where(f => f.Status == FriendshipStatus.Accepted)
-                                            .Select(f => f.Friend)
-                                            .Contains(room.Owner)))
-                {
-                    <div class="room" @onclick="() => GoToRoom(room)">
-                        @if (room.CurrentVideo is null)
-                        {
-                            <div class="no-image-blur"></div>
-                            <div class="no-image">
-                                STILL DECIDING
-                            </div>
-                        }
-                        else
-                        {
-                            @if (room.CurrentVideo.SourceType == VideoSourceType.Local)
-                            {
-                                <img class="image-blur" src="@($"api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")">
-                                <div class="image-window">
-                                    <img class="image" src="@($"api/Videos/getframe/{room.Id}_{room.CurrentVideo.FileName}-{room.CurrentVideo.CurrentTime}")">
-                                </div>
-					        }
-					        else
-					        {
-                                <img class="image-blur" src="@($"https://img.youtube.com/vi/{room.CurrentVideo.YouTubeId}/hqdefault.jpg")">
-                                <div class="image-window">
-                                    <img class="image" src="@($"https://img.youtube.com/vi/{room.CurrentVideo.YouTubeId}/hqdefault.jpg")">
-                                </div>
-                            }
-                            <div class="img-shadow"/>
-                        }
-                        <label class="room-name">@room.Name</label>
-                        <div class="room-footer">
-                            <label class="room-auth">by @room.Owner.UserName</label>
-                            @if (RoomsParticipants.TryGetValue(room.Id, out List<ApplicationUser> users))
-                            {
-                                <label class="room-viewers">@(users.Count())</label>
-                            }
-                            else
-                            {
-                                <label class="room-viewers">0</label>
-                            }
-                        </div>
-                    </div>
-                }
-            }
-        </div>
-    </div>
 </div>
 
 <script>
