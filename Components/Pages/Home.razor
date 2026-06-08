@@ -151,7 +151,14 @@
                 <div class="friends-list">
                     @foreach(Friendship friendship in User?.Friendships)
                     {
-                        <p>f</p>
+                        <div class="friend-block">
+                            <p>@friendship.Friend?.UserName</p>
+                            <div class="multi-button">
+                                <p class="first">connect</p>
+                                <div class="separator"></div>
+                                <p class="second">rooms</p>
+                            </div>
+                        </div>
                     }
                 </div>
                 <a href="Account/Friends">Add</a>
