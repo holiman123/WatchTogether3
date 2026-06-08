@@ -16,6 +16,8 @@ namespace WatchTogether3.Data
                 .HasMany<Room>(u => u.Rooms)
                 .WithOne(r => r.Owner);
 
+
+
             builder.Entity<Room>()
                 .HasMany<VideoFile>(r => r.UploadedVideos)
                 .WithOne(v => v.Room)
@@ -28,6 +30,11 @@ namespace WatchTogether3.Data
             builder.Entity<Room>()
                 .HasMany<ApplicationUser>(r => r.AllowedToControlUsers)
                 .WithMany();
+
+            builder.Entity<Room>()
+                .HasMany<ApplicationUser>(r => r.Participants)
+                .WithOne(u => u.CurrentRoom);
+
 
 
             builder.Entity<Friendship>()

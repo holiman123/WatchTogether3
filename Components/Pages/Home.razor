@@ -127,14 +127,7 @@
                             <p class="room-name">@room.Name</p>
                             <div class="room-footer">
                                 <p class="room-auth">by @room.Owner.UserName</p>
-                                @if (RoomsParticipants.TryGetValue(room.Id, out List<ApplicationUser> users))
-                                {
-                                    <p class="room-viewers">@(users.Count())</p>
-                                }
-                                else
-                                {
-                                    <p class="room-viewers">0</p>
-                                }
+                                <p class="room-viewers">@(room.Participants.Count())</p>
                             </div>
                         </div>
                     }
@@ -153,6 +146,7 @@
                     {
                         <div class="friend-block">
                             <p>@friendship.Friend?.UserName</p>
+                            <p>@friendship.Friend?.CurrentRoom?.Name</p>
                             <div class="multi-button">
                                 <p class="first">connect</p>
                                 <div class="separator"></div>

@@ -7,6 +7,8 @@ namespace WatchTogether3.Data
     // Add profile data for application users by adding properties to the ApplicationUser class
     public class ApplicationUser : IdentityUser
     {
+        public Room? CurrentRoom { get; set; }
+
         public List<Room> Rooms { get; set; }
 
         public List<Friendship> Friendships { get; set; }

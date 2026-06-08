@@ -84,18 +84,15 @@ else if (roomViewState == RoomViewState.FullAccess)
         <button @onclick="RemoveRoom">Remove room</button>
     }
 
-    @if (RoomsParticipants.ContainsKey(roomId))
+    foreach (ApplicationUser? participant in RoomData?.Participants)
     {
-        foreach (ApplicationUser? participant in RoomsParticipants[roomId])
+        if (participant is not null)
         {
-            if (participant is not null)
-            {
-                <p>@participant.UserName</p>
-            }
-            else
-            {
-                <p>Guest</p>
-            }
+            <p>@participant.UserName</p>
+        }
+        else
+        {
+            <p>Guest</p>
         }
     }
     #endregion 
@@ -212,11 +209,17 @@ else if (roomViewState == RoomViewState.NoAccess)
 
             hub.On("UserJoinedFromHub", (string userId) =>
             {
-                InvokeAsync(StateHasChanged);
+                // DbContext.ChangeTracker.Clear();
+                // RoomData = DbContext.Rooms.Find(RoomData.Id);
+                // DbContext.Entry<Data.Room>(RoomData).Reload();
+                // InvokeAsync(StateHasChanged);
             });
             hub.On("UserLeftFromHub", (string userId) =>
             {
-                InvokeAsync(StateHasChanged);
+                // DbContext.ChangeTracker.Clear();
+                // RoomData = DbContext.Rooms.Find(RoomData.Id);
+                // DbContext.Entry<Data.Room>(RoomData).Reload();
+                // InvokeAsync(StateHasChanged);
             });
             hub.On("RoomRemovedFromHub", () =>
             {
@@ -253,9 +256,17 @@ else if (roomViewState == RoomViewState.NoAccess)
 
             // Enter room
             RoomsParticipants.AddRoomParticipant(roomId, User);
+            if (User is not null)
+            {
+                DbContext.Users.Find(User.Id)?.CurrentRoom = RoomData;
+                DbContext.SaveChanges();
+            }
 
             if (User is not null)
+            {
                 hub.InvokeAsync("EnterRoom", roomId, User.Id).Wait();
+                await hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
+            }
             else
                 hub.InvokeAsync("EnterRoom", roomId, String.Empty).Wait();
 
@@ -494,7 +505,16 @@ else if (roomViewState == RoomViewState.NoAccess)
             }
 
             if (User is not null)
+            {
+                DbContext.Users.Find(User.Id).CurrentRoom = null;
+                DbContext.SaveChanges();
+            }
+
+            if (User is not null)
+            {
                 hub.SendAsync("LeaveRoom", roomId, User.Id);
+                hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
+            }
             else
                 hub.SendAsync("LeaveRoom", roomId, String.Empty);
 

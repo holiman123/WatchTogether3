@@ -27,6 +27,8 @@ public class Room
     public PrivacyLevel ControlPlayerPrivacyLevel { get; set; }
     public PrivacyLevel ControlVideoPrivacyLevel { get; set; }
 
+    public List<ApplicationUser> Participants { get; set; } = new List<ApplicationUser>();
+
     public List<ApplicationUser> AllowedToEnterUsers { get; set; } = new List<ApplicationUser>();
     public List<ApplicationUser> AllowedToControlUsers { get; set; } = new List<ApplicationUser>();
 
