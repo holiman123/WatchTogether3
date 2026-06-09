@@ -139,11 +139,17 @@
                     {
                         <div class="friend-block">
                             <p>@friendship.Friend?.UserName</p>
-                            <p>@friendship.Friend?.CurrentRoom?.Name</p>
                             <div class="multi-button">
-                                <p class="first">connect</p>
+                                @if (friendship.Friend?.CurrentRoom is not null)
+                                {
+                                    <p @onclick="() => GoToRoom(friendship.Friend?.CurrentRoom)" class="first button-part">connect</p>
+                                }
+                                else
+                                {
+                                    <p class="first button-part-unactive">connect</p>
+                                }
                                 <div class="separator"></div>
-                                <p class="second">rooms</p>
+                                <p class="second button-part">rooms</p>
                             </div>
                         </div>
                     }

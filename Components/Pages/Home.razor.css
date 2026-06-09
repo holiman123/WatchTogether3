@@ -205,8 +205,20 @@
     border-radius: 8px 0 0 8px;
 }
 
+.multi-button .first-unactive {
+    border-radius: 8px 0 0 8px;
+}
+
+.multi-button .button-part {
+
+}
+
+.multi-button .button-part-unactive {
+    color: #6F6F6F;
+    cursor: default;
+}
+
 .multi-button .second {
-    
     border-radius: 0 8px 8px 0;
 }
 
@@ -216,10 +228,10 @@
     background-color: #AFAFAF;
 }
 
-.multi-button p:hover{
+.multi-button .button-part:hover{
     background: rgba(131,0,61,0.63);
 }
 
-.multi-button:has(p:hover) {
+.multi-button:has(.button-part:hover) {
     box-shadow: none;
 }
