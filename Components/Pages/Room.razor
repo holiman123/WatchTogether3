@@ -19,7 +19,7 @@
 @inject ApplicationDbContext DbContext
 @inject AuthenticationStateProvider authState
 @inject UserManager<ApplicationUser> userManager
-@inject RoomsParticipantsService RoomsParticipants
+@inject RoomsGuestsService RoomsGuests
 @inject ProtectedSessionStorage sessionStorage
 
 
@@ -116,7 +116,7 @@ else if (roomViewState == RoomViewState.NoAccess)
 
     private double? progress { get; set; } = null;
 
-    private HubConnection hub { get; set; }
+    private HubConnection Hub { get; set; }
 
     private ApplicationUser? User { get; set; }
 
@@ -193,7 +193,7 @@ else if (roomViewState == RoomViewState.NoAccess)
 
             // All this options for SSL certificate validation are needed because
             // in development environment we use self-signed certificates, and without them SignalR won't connect to hub
-            hub = hubBuilder.WithUrl(hubUri, (opts) => {
+            Hub = hubBuilder.WithUrl(hubUri, (opts) => {
                 opts.HttpMessageHandlerFactory = (message) =>
                 {
                     if (message is HttpClientHandler clientHandler)
@@ -207,35 +207,35 @@ else if (roomViewState == RoomViewState.NoAccess)
             .AddJsonProtocol(opt => opt.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)
             .Build();
 
-            hub.On("UserJoinedFromHub", (string userId) =>
+            Hub.On("UserJoinedFromHub", (string userId) =>
             {
                 // DbContext.ChangeTracker.Clear();
                 // RoomData = DbContext.Rooms.Find(RoomData.Id);
                 // DbContext.Entry<Data.Room>(RoomData).Reload();
-                // InvokeAsync(StateHasChanged);
+                InvokeAsync(StateHasChanged);
             });
-            hub.On("UserLeftFromHub", (string userId) =>
+            Hub.On("UserLeftFromHub", (string userId) =>
             {
                 // DbContext.ChangeTracker.Clear();
                 // RoomData = DbContext.Rooms.Find(RoomData.Id);
                 // DbContext.Entry<Data.Room>(RoomData).Reload();
-                // InvokeAsync(StateHasChanged);
+                InvokeAsync(StateHasChanged);
             });
-            hub.On("RoomRemovedFromHub", () =>
+            Hub.On("RoomRemovedFromHub", () =>
             {
                 Navigation.NavigateTo("/");
             });
-            hub.On("ProceedFromHub", (double time) =>
+            Hub.On("ProceedFromHub", (double time) =>
             {
                 videoTt.Seek(time);
                 videoTt.Proceed();
             });
-            hub.On("PauseFromHub", (double time) =>
+            Hub.On("PauseFromHub", (double time) =>
             {
                 videoTt.Pause();
                 videoTt.Seek(time);
             });
-            hub.On("RoomDataChangedFromHub", async (Data.Room roomData) =>
+            Hub.On("RoomDataChangedFromHub", async (Data.Room roomData) =>
             {
                 if (roomData.CurrentVideo?.SourceType != videoTt.Video?.SourceType)
                     VideoSourceTypeChanged = true;
@@ -249,26 +249,25 @@ else if (roomViewState == RoomViewState.NoAccess)
                 DbContext.ChangeTracker.Clear(); // Changing tracking instance to new one
                 RoomData = roomData;
                 DbContext.Rooms.Attach(RoomData);
+
                 await InvokeAsync(StateHasChanged);
             });
 
-            hub.StartAsync().Wait();
+            Hub.StartAsync().Wait();
 
             // Enter room
-            RoomsParticipants.AddRoomParticipant(roomId, User);
             if (User is not null)
             {
                 DbContext.Users.Find(User.Id)?.CurrentRoom = RoomData;
                 DbContext.SaveChanges();
-            }
 
-            if (User is not null)
-            {
-                hub.InvokeAsync("EnterRoom", roomId, User.Id).Wait();
-                await hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
+                await Hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
             }
-            else
-                hub.InvokeAsync("EnterRoom", roomId, String.Empty).Wait();
+            else if (Hub.ConnectionId is not null)
+            {
+                RoomsGuests.AddRoomGuest(roomId, Hub.ConnectionId);
+                Hub.InvokeAsync("EnterRoom", roomId, String.Empty).Wait();
+            }
 
             await InvokeAsync(StateHasChanged);
 
@@ -293,20 +292,20 @@ else if (roomViewState == RoomViewState.NoAccess)
 
     private void SendVideoProceed(VideoComponent videoComponent, double time)
     {
-        if (hub is null || RoomData.CurrentVideo is null || !CanControlVideo)
+        if (Hub is null || RoomData.CurrentVideo is null || !CanControlVideo)
             return;
 
-        hub.SendAsync("Proceeded", roomId, time);
+        Hub.SendAsync("Proceeded", roomId, time);
 
         RoomData.CurrentVideo.Play(time);
         DbContext.SaveChanges();
     }
     private void SendVideoPause(VideoComponent videoComponent, double time)
     {
-        if (hub is null || RoomData.CurrentVideo is null || !CanControlVideo)
+        if (Hub is null || RoomData.CurrentVideo is null || !CanControlVideo)
             return;
 
-        hub.SendAsync("Paused", roomId, time);
+        Hub.SendAsync("Paused", roomId, time);
 
         RoomData.CurrentVideo.Pause(time);
         DbContext.SaveChanges();
@@ -367,7 +366,7 @@ else if (roomViewState == RoomViewState.NoAccess)
                 DbContext.SaveChanges();
 
                 //await hub.InvokeAsync("VideoUploaded", roomId, videoFile);
-                await hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
+                await Hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
 
                 await Task.Delay(100);
 
@@ -395,7 +394,7 @@ else if (roomViewState == RoomViewState.NoAccess)
         RoomData.UploadedVideos.Add(videoFile);
         DbContext.SaveChanges();
 
-        hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
+        Hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
         tempYTurl = String.Empty;
 
         InvokeAsync(StateHasChanged);
@@ -409,7 +408,7 @@ else if (roomViewState == RoomViewState.NoAccess)
             RoomData.UploadedVideos.ExchangeItems(index, index - 1);
 
             DbContext.SaveChanges();
-            hub.SendAsync("RoomDataChanged", roomId, RoomData);
+            Hub.SendAsync("RoomDataChanged", roomId, RoomData);
         }
     }
 
@@ -421,7 +420,7 @@ else if (roomViewState == RoomViewState.NoAccess)
             RoomData.UploadedVideos.ExchangeItems(index, index + 1);
 
             DbContext.SaveChanges();
-            hub.SendAsync("RoomDataChanged", roomId, RoomData);
+            Hub.SendAsync("RoomDataChanged", roomId, RoomData);
         }
     }
 
@@ -434,7 +433,7 @@ else if (roomViewState == RoomViewState.NoAccess)
         RoomData.CurrentVideo = video;
         DbContext.SaveChanges();
 
-        hub.SendAsync("RoomDataChanged", roomId, RoomData);
+        Hub.SendAsync("RoomDataChanged", roomId, RoomData);
 
         InvokeAsync(StateHasChanged);
     }
@@ -444,7 +443,7 @@ else if (roomViewState == RoomViewState.NoAccess)
         video.FriendlyName = newName;
         DbContext.SaveChanges();
 
-        hub.SendAsync("RoomDataChanged", roomId, RoomData);
+        Hub.SendAsync("RoomDataChanged", roomId, RoomData);
 
         tempNewVideoName = String.Empty;
     }
@@ -462,7 +461,7 @@ else if (roomViewState == RoomViewState.NoAccess)
         {
             if (video.SourceType == VideoSourceType.Local)
                 File.Delete(video.Path);
-            hub.SendAsync("RoomDataChanged", roomId, RoomData);
+            Hub.SendAsync("RoomDataChanged", roomId, RoomData);
         }
     }
 
@@ -485,41 +484,42 @@ else if (roomViewState == RoomViewState.NoAccess)
         DbContext.Rooms.Remove(RoomData);
         DbContext.SaveChanges();
 
-        RoomsParticipants.Remove(roomId);
+        RoomsGuests.Remove(roomId);
 
-        hub.SendAsync("RoomRemoved", roomId);
+        Hub.SendAsync("RoomRemoved", roomId);
 
         Navigation.NavigateTo("/");
     }
 
     public void Dispose()
     {
-        if (hub is not null)
+        if (Hub is not null && Hub.ConnectionId is not null)
         {
-            if (RoomsParticipants.TryGetValue(roomId, out List<ApplicationUser?> users))
-            {
-                users.Remove(User);
-
-                if (users.Count == 0 && RoomData?.CurrentVideo is not null)
-                    SendVideoPause(videoTt, RoomData.CurrentVideo.CurrentTime);
-            }
-
             if (User is not null)
             {
                 DbContext.Users.Find(User.Id).CurrentRoom = null;
+                // User.CurrentRoom = null;
                 DbContext.SaveChanges();
-            }
 
-            if (User is not null)
+                Hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
+            }
+            else if (Hub.ConnectionId is not null)
             {
-                hub.SendAsync("LeaveRoom", roomId, User.Id);
-                hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
-            }
-            else
-                hub.SendAsync("LeaveRoom", roomId, String.Empty);
+                RoomsGuests.RemoveRoomGuest(roomId, Hub.ConnectionId);
 
-            hub.StopAsync();
-            hub = null;
+                Hub.SendAsync("LeaveRoom", roomId, String.Empty);
+            }
+
+            // Pause video if room becomes empty
+            if ((RoomData.Participants.Count + RoomsGuests.GetRoomGuestCount(roomId)) == 0 &&
+                RoomData?.CurrentVideo is not null)
+            {
+                SendVideoPause(videoTt, RoomData.CurrentVideo.CurrentTime);
+            }
+                
+
+            Hub.StopAsync();
+            Hub = null;
         }
     }
 
