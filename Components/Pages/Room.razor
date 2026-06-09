@@ -84,16 +84,13 @@ else if (roomViewState == RoomViewState.FullAccess)
         <button @onclick="RemoveRoom">Remove room</button>
     }
 
-    foreach (ApplicationUser? participant in RoomData?.Participants)
+    @foreach (ApplicationUser participant in RoomData?.Participants)
     {
-        if (participant is not null)
-        {
-            <p>@participant.UserName</p>
-        }
-        else
-        {
-            <p>Guest</p>
-        }
+        <p>@participant.UserName</p>
+    }
+    @foreach (string guest in RoomsGuests.GetGuests(roomId))
+    {
+        <p>Guest: @guest</p>
     }
     #endregion 
 }
@@ -261,6 +258,7 @@ else if (roomViewState == RoomViewState.NoAccess)
                 DbContext.Users.Find(User.Id)?.CurrentRoom = RoomData;
                 DbContext.SaveChanges();
 
+				await Hub.SendAsync("EnterRoom", roomId, User.Id);
                 await Hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
             }
             else if (Hub.ConnectionId is not null)
@@ -501,6 +499,7 @@ else if (roomViewState == RoomViewState.NoAccess)
                 // User.CurrentRoom = null;
                 DbContext.SaveChanges();
 
+				Hub.SendAsync("LeaveRoom", roomId, User.Id);
                 Hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
             }
             else if (Hub.ConnectionId is not null)
