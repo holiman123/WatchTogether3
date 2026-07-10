@@ -22,82 +22,117 @@
 @inject RoomsGuestsService RoomsGuests
 @inject ProtectedSessionStorage sessionStorage
 
+<div class="body">
+    <div class="top">
+        <p>@RoomData.Name</p>
+    </div>
+    <div class="bottom">
+        @if (roomViewState == RoomViewState.Loading)
+        {
+            <h1>Loading...</h1>
+        }
+        else if (roomViewState == RoomViewState.FullAccess)
+        {
+            #region FullAccessView
+            <PageTitle>Room @RoomData.Name</PageTitle>
 
-@if (roomViewState == RoomViewState.Loading)
-{
-    <h1>Loading...</h1>
-}
-else if (roomViewState == RoomViewState.FullAccess)
-{
-    #region FullAccessView
-    <PageTitle>Room @RoomData.Name</PageTitle>
+            
 
-    <h1>@RoomData.Name room by @RoomData.Owner.UserName</h1>
+            <div class="videos-list">
+                @foreach (VideoFile video in RoomData.UploadedVideos.OrderBy(v => v.Order))
+                {
+                    <div class="video-block">
+                        <div class="video-image" @onclick="() => ChangeVideo(video)">
+                            @if (video.SourceType == VideoSourceType.Local)
+                            {
+                                <img class="image-blur" src="@($"api/Videos/getframe/{RoomData.Id}_{video.FileName}-{video.CurrentTime}")">
+                                <div class="image-window">
+                                    <img class="image" src="@($"api/Videos/getframe/{RoomData.Id}_{video.FileName}-{video.CurrentTime}")">
+                                </div>
+                            }
+                            else
+                            {
+                                <img class="image-blur" src="@($"https://img.youtube.com/vi/{video.YouTubeId}/hqdefault.jpg")">
+                                <div class="image-window">
+                                    <img class="image" src="@($"https://img.youtube.com/vi/{video.YouTubeId}/hqdefault.jpg")">
+                                </div>
+                            }
+                            <div class="img-shadow" />
+                            <p class="video-name">@video.FriendlyName</p>
+                        </div>
 
-    <hr>
-    <InputFile id="fileUpload" OnChange="LoadFile" style="display:none" />
+                        <div class="video-bottom">
+                            <button @onclick="() => MoveVideoUp(video)">←</button>
+                            <button @onclick="() => RemoveVideo(video)">X</button>
+                            <button @onclick="() => MoveVideoDown(video)">→</button>
+                        </div>
+                    </div>
+                }
+            </div>
+
+
+            <InputFile id="fileUpload" OnChange="LoadFile" style="display:none" />
     
-    <hr>
-    <InputText @bind-Value="tempYTurl"/>
-    <button @onclick="AddYouTubeVideo">Add YouTube Video</button>
+            <InputText @bind-Value="tempYTurl"/>
+            <button @onclick="AddYouTubeVideo">Add YouTube Video</button>
 
-    @foreach (VideoFile video in RoomData.UploadedVideos.OrderBy(v => v.Order))
-    {
-        <button @onclick="() => ChangeVideo(video)">@video.FriendlyName</button>
-        <textarea @bind="tempNewVideoName" />
-        <button @onclick="() => RenameVideo(video, tempNewVideoName)">Rename</button>
-        <button @onclick="() => RemoveVideo(video)">X</button>
-        <button @onclick="() => MoveVideoUp(video)">↑</button>
-        <button @onclick="() => MoveVideoDown(video)">↓</button>
-        <br />
-    }
-    @if (progress is null)
-    {
-        <label for="fileUpload">+</label>
-    }
-    else
-    {
-        <label>Uploading: @progress.Value.ToString("0.00")%</label>
-        <button @onclick="() => FileUploadCTS.Cancel()">X</button>
-    }
+            @if (progress is null)
+            {
+                <label for="fileUpload">+</label>
+            }
+            else
+            {
+                <label>Uploading: @progress.Value.ToString("0.00")%</label>
+                <button @onclick="() => FileUploadCTS.Cancel()">X</button>
+            }
 
-    <br />
-    <br />
+            
+            <div class="name-area">
+                <div>
+                    <p>@RoomData?.CurrentVideo?.FriendlyName</p>
+                    <textarea @bind="tempNewVideoName"/>
+                    <button @onclick="() => RenameVideo(RoomData?.CurrentVideo, tempNewVideoName)">Rename</button>
+                </div>
+            </div>
 
-    @if (RoomData.CurrentVideo?.SourceType == VideoSourceType.Local)
-    {
-        <VideoComponentFile @ref="videoTt"
-                            Video="@(RoomData.CurrentVideo)"
-                            DoShowControls="@CanControlVideo" />
-    }
-    else if (RoomData.CurrentVideo?.SourceType == VideoSourceType.YouTube)
-    {
-	    <VideoComponentYT @ref="videoTt"
-                          Video="@(RoomData.CurrentVideo)"
-                          DoShowControls="@CanControlVideo"/>
-    }
+            <div class="video-area">
+                @if (RoomData?.CurrentVideo?.SourceType == VideoSourceType.Local)
+                {
+                    <VideoComponentFile @ref="videoTt"
+                                        Video="@(RoomData.CurrentVideo)"
+                                        DoShowControls="@CanControlVideo" />
+                }
+                else if (RoomData?.CurrentVideo?.SourceType == VideoSourceType.YouTube)
+                {
+	                <VideoComponentYT @ref="videoTt"
+                                      Video="@(RoomData.CurrentVideo)"
+                                      DoShowControls="@CanControlVideo"/>
+                }
+            </div>
 
-    <hr>
+            <hr>
 
-    @if (User is not null && User.Id == RoomData?.Owner?.Id)
-    {
-        <button @onclick="RemoveRoom">Remove room</button>
-    }
+            @if (User is not null && User.Id == RoomData?.Owner?.Id)
+            {
+                <button @onclick="RemoveRoom">Remove room</button>
+            }
 
-    @foreach (ApplicationUser participant in RoomData?.Participants)
-    {
-        <p>@participant.UserName</p>
-    }
-    @foreach (string guest in RoomsGuests.GetGuests(roomId))
-    {
-        <p>Guest: @guest</p>
-    }
-    #endregion 
-}
-else if (roomViewState == RoomViewState.NoAccess)
-{
-	<h1>RESTRICTED ACCESS YOU FOOL!</h1>
-}
+            @foreach (ApplicationUser participant in RoomData?.Participants)
+            {
+                <p>@participant.UserName</p>
+            }
+            @foreach (string guest in RoomsGuests.GetGuests(roomId))
+            {
+                <p>Guest: @guest</p>
+            }
+            #endregion 
+        }
+        else if (roomViewState == RoomViewState.NoAccess)
+        {
+	        <h1>RESTRICTED ACCESS YOU FOOL!</h1>
+        }
+    </div>
+</div>
 
 @code {
     //First time changing video, it is not set time correctly. This is because video is not fully loaded when correct time is applied

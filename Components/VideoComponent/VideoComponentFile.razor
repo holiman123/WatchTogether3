@@ -8,7 +8,7 @@
 @inject IJSRuntime JS
 @inject ApplicationDbContext DbContext
 
-<video width="320" height="240" id="video_comp">
+<video width="640" height="390" id="video_comp">
         Your browser does not support the video tag.
 </video>
 <button id="play_btn" style="visibility: visible">Play</button>
@@ -19,6 +19,7 @@
 
     [Parameter]
     public bool DoShowControls { get; set; } = true;
+
 
     private IJSObjectReference JsModule;
     private string prevUrl;
