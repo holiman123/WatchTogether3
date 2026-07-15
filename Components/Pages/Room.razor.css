@@ -30,14 +30,14 @@
 
 .image {
     margin: auto;
-    width: 300px;
+    width: 250px;
     position: absolute;
     /*This shit makes image centered somehow Ya hz kak*/
     inset: -9999px;
 }
 
 .image-window {
-    width: 300px;
+    width: 250px;
     aspect-ratio: 16/9;
     border-radius: 10px 10px 0 0;
     overflow: hidden;
@@ -45,7 +45,7 @@
 }
 
 .image-blur {
-    width: 300px;
+    width: 250px;
     aspect-ratio: 16/9;
     border-radius: 10px;
     filter: blur(50px);
@@ -60,7 +60,7 @@
 .img-shadow {
     background-color: transparent;
     box-shadow: 0px 142px 48px -82px rgba(0,0,0) inset;
-    width: 300px;
+    width: 250px;
     aspect-ratio: 16/9;
     position: absolute;
     top: 0;
@@ -71,13 +71,11 @@
     display: flex;
     width: stretch;
     justify-content: space-between;
-    padding: 10px;
+    padding-inline: 10px;
+    padding-block: 5px;
     background-color: #0E0713;
     border-radius: 0 0 10px 10px;
-}
-
-.video-bottom button {
-    font-size: 18px;
+    overflow: hidden;
 }
 
 .videos-list {
@@ -115,4 +113,26 @@
 .video-area {
     display: flex;
     justify-content: center;
+}
+
+
+.arrow-container {
+    border-radius: 5px;
+    width: 25px;
+    transition: 300ms;
+    background: #0E0713;
+}
+.arrow-container:hover {
+    /*    background: #830042;*/
+    box-shadow: 0px 0px 20px 15px rgba(131,0,61,0.63);
+}
+.arrow-container-left {
+    rotate: -90deg;
+}
+.arrow-container-right {
+    rotate: 90deg;
+}
+.arrow-container p {
+    margin: 0;
+    text-align: center;
 }

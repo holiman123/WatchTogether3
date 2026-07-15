@@ -62,9 +62,23 @@
                         </div>
 
                         <div class="video-bottom">
-                            <button @onclick="() => MoveVideoUp(video)">←</button>
-                            <button @onclick="() => RemoveVideo(video)">X</button>
-                            <button @onclick="() => MoveVideoDown(video)">→</button>
+                            <div class="arrow-container arrow-container-left" @onclick="() => MoveVideoUp(video)">
+                                <svg width="23" height="23">
+                                    <g id="Arrow / Arrow_Up_SM">
+                                        <path id="Vector" d="M12 17V7M12 7L8 11M12 7L16 11" stroke="#AFAFAF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </g>
+                                </svg>
+                            </div>
+                            <div class="arrow-container" @onclick="() => RemoveVideo(video)">
+                                <p>X</p>
+                            </div>
+                            <div class="arrow-container arrow-container-right" @onclick="() => MoveVideoDown(video)">
+                                <svg width="23" height="23">
+                                    <g id="Arrow / Arrow_Up_SM">
+                                        <path id="Vector" d="M12 17V7M12 7L8 11M12 7L16 11" stroke="#AFAFAF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </g>
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 }
