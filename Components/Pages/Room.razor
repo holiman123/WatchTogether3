@@ -37,7 +37,7 @@
             <PageTitle>Room @RoomData.Name</PageTitle>
 
             
-
+            <InputFile id="fileUpload" OnChange="LoadFile" style="display:none" />
             <div class="videos-list">
                 @foreach (VideoFile video in RoomData.UploadedVideos.OrderBy(v => v.Order))
                 {
@@ -82,23 +82,25 @@
                         </div>
                     </div>
                 }
+                <div class="add-video-block">
+                    <div class="add-video-block-part add-youtube">
+                        <InputText  @bind-Value="tempYTurl" 
+                                    title="URL of the youtube video" 
+                                    placeholder="youtube URL"/>
+                        <div class="button" @onclick="AddYouTubeVideo">ADD</div>
+                    </div>
+                    <div class="add-video-block-part">
+                        @if (progress is null)
+                        {
+                            <label for="fileUpload">FILE</label>
+                        }
+                        else
+                        {
+                            <label @onclick="() => FileUploadCTS.Cancel()">@progress.Value.ToString("0.00")%</label>
+                        }
+                    </div>
+                </div>
             </div>
-
-
-            <InputFile id="fileUpload" OnChange="LoadFile" style="display:none" />
-    
-            <InputText @bind-Value="tempYTurl"/>
-            <button @onclick="AddYouTubeVideo">Add YouTube Video</button>
-
-            @if (progress is null)
-            {
-                <label for="fileUpload">+</label>
-            }
-            else
-            {
-                <label>Uploading: @progress.Value.ToString("0.00")%</label>
-                <button @onclick="() => FileUploadCTS.Cancel()">X</button>
-            }
 
             
             <div class="name-area">
@@ -307,7 +309,7 @@
                 DbContext.Users.Find(User.Id)?.CurrentRoom = RoomData;
                 DbContext.SaveChanges();
 
-				await Hub.SendAsync("EnterRoom", roomId, User.Id);
+                await Hub.SendAsync("EnterRoom", roomId, User.Id);
                 await Hub.InvokeAsync("RoomDataChanged", roomId, RoomData);
             }
             else if (Hub.ConnectionId is not null)
@@ -504,11 +506,29 @@
 
         DbContext.Videos.Remove(video);
         RoomData.UploadedVideos.Remove(video);
+
+        Hub.SendAsync("RoomDataChanged", roomId, RoomData);
+
         if (DbContext.SaveChanges() != 0)
         {
             if (video.SourceType == VideoSourceType.Local)
-                File.Delete(video.Path);
-            Hub.SendAsync("RoomDataChanged", roomId, RoomData);
+            {
+                Exception exception = null;
+                Task.Run(async () =>
+                {
+                    for (int i = 0; i < 5; i++)
+                    {
+                        try {
+                            File.Delete(video.Path);
+                        } catch(Exception ex) { exception = ex; }
+                        await Task.Delay(2000);
+                    }
+                }).ContinueWith((task) =>
+                {
+                    if (File.Exists(video.Path))
+                        throw new Exception("Could not delete a file.", exception);
+                });
+            }
         }
     }
 

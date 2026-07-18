@@ -49,6 +49,8 @@ public class VideosController : ControllerBase
                 bitmap.Save(ms, ImageFormat.Jpeg);
             }
 
+            video.Dispose();
+
             ms.Position = 0;
             return Results.File(ms, "image/jpeg", $"{name}_f{time}.jpeg", enableRangeProcessing: true);
         }
