@@ -8,10 +8,12 @@
 @inject IJSRuntime JS
 @inject ApplicationDbContext DbContext
 
-<video width="640" height="390" id="video_comp">
-        Your browser does not support the video tag.
-</video>
-<button id="play_btn" style="visibility: visible">Play</button>
+<div class="vcf-block">
+    <video width="640" height="390" id="video_comp">
+            Your browser does not support the video tag.
+    </video>
+    <button id="play_btn" style="visibility: visible">►</button>
+</div>
 
 @code {
     [Parameter]

@@ -1,0 +1,24 @@
+﻿.vcf-block {
+    position:relative;
+}
+
+.vcf-block video {
+    position: relative;
+}
+
+.vcf-block button {
+    background-color: #83004260;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    font-size: 68px;
+    transition: 500ms;
+    border: none;
+}
+
+    .vcf-block button:hover {
+        background-color: transparent;
+        font-size: 84px;
+    }
