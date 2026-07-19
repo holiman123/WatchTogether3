@@ -104,11 +104,21 @@
 
             
             <div class="name-area">
-                <div>
+                <div class="name">
                     <p>@RoomData?.CurrentVideo?.FriendlyName</p>
-                    <textarea @bind="tempNewVideoName"/>
-                    <button @onclick="() => RenameVideo(RoomData?.CurrentVideo, tempNewVideoName)">Rename</button>
+                    @if (isRenamingVideo)
+                    {
+                        <input @bind-value="tempNewVideoName" />
+                    }
                 </div>
+                <button class="button" @onclick="() => {
+                            if (isRenamingVideo)
+                                RenameVideo(RoomData?.CurrentVideo, tempNewVideoName);
+                            else
+                                tempNewVideoName = RoomData?.CurrentVideo?.FriendlyName;
+
+                            isRenamingVideo = !isRenamingVideo;
+                }">Rename</button>
             </div>
 
             <div class="video-area">
@@ -173,6 +183,8 @@
     private CancellationTokenSource FileUploadCTS { get; set; }
 
     private string tempNewVideoName { get; set; } = string.Empty;
+
+    private bool isRenamingVideo { get; set; } = false;
 
     private string tempYTurl { get; set; } = string.Empty;
 
@@ -494,7 +506,7 @@
 
         Hub.SendAsync("RoomDataChanged", roomId, RoomData);
 
-        tempNewVideoName = String.Empty;
+        tempNewVideoName = video.FriendlyName;
     }
 
     private void RemoveVideo(VideoFile video)
