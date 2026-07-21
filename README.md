@@ -13,6 +13,9 @@ Here I'm trying to create website which will make watching as easy as possible b
 - Friends sustem:  
   Users can add each other as friends which adds easy connection and more privacy control to rooms.
 
+### It's possible to upload videos from your machine or from youtube via link. ###
+
+Screenshots of the website:
 ![Home screenshot](https://github.com/holiman123/WatchTogether3/blob/master/images/Home.png?raw=true)
 
 ![Room screenshot](https://github.com/holiman123/WatchTogether3/blob/master/images/Room.png?raw=true)
