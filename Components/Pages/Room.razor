@@ -34,123 +34,138 @@
         else if (roomViewState == RoomViewState.FullAccess)
         {
             #region FullAccessView
-            <PageTitle>Room @RoomData.Name</PageTitle>
+            <div class="full-access-bottom">
+                <div class="bottom-video-area">
+                    <PageTitle>Room @RoomData.Name</PageTitle>
 
             
-            <InputFile id="fileUpload" OnChange="LoadFile" style="display:none" />
-            <div class="videos-list">
-                @foreach (VideoFile video in RoomData.UploadedVideos.OrderBy(v => v.Order))
-                {
-                    <div class="video-block">
-                        <div class="video-image" @onclick="() => ChangeVideo(video)">
-                            @if (video.SourceType == VideoSourceType.Local)
-                            {
-                                <img class="image-blur" src="@($"api/Videos/getframe/{RoomData.Id}_{video.FileName}-{video.CurrentTime}")">
-                                <div class="image-window">
-                                    <img class="image" src="@($"api/Videos/getframe/{RoomData.Id}_{video.FileName}-{video.CurrentTime}")">
-                                </div>
-                            }
-                            else
-                            {
-                                <img class="image-blur" src="@($"https://img.youtube.com/vi/{video.YouTubeId}/hqdefault.jpg")">
-                                <div class="image-window">
-                                    <img class="image" src="@($"https://img.youtube.com/vi/{video.YouTubeId}/hqdefault.jpg")">
-                                </div>
-                            }
-                            <div class="img-shadow" />
-                            <p class="video-name">@video.FriendlyName</p>
-                        </div>
-
-                        <div class="video-bottom">
-                            <div class="arrow-container arrow-container-left" @onclick="() => MoveVideoUp(video)">
-                                <svg width="23" height="23">
-                                    <g id="Arrow / Arrow_Up_SM">
-                                        <path id="Vector" d="M12 17V7M12 7L8 11M12 7L16 11" stroke="#AFAFAF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                    </g>
-                                </svg>
-                            </div>
-                            <div class="arrow-container" @onclick="() => RemoveVideo(video)">
-                                <p>X</p>
-                            </div>
-                            <div class="arrow-container arrow-container-right" @onclick="() => MoveVideoDown(video)">
-                                <svg width="23" height="23">
-                                    <g id="Arrow / Arrow_Up_SM">
-                                        <path id="Vector" d="M12 17V7M12 7L8 11M12 7L16 11" stroke="#AFAFAF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                    </g>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                }
-                <div class="add-video-block">
-                    <div class="add-video-block-part add-youtube">
-                        <InputText  @bind-Value="tempYTurl" 
-                                    title="URL of the youtube video" 
-                                    placeholder="youtube URL"/>
-                        <div class="button" @onclick="AddYouTubeVideo">ADD</div>
-                    </div>
-                    <div class="add-video-block-part">
-                        @if (progress is null)
+                    <InputFile id="fileUpload" OnChange="LoadFile" style="display:none" />
+                    <div class="videos-list">
+                        @foreach (VideoFile video in RoomData.UploadedVideos.OrderBy(v => v.Order))
                         {
-                            <label for="fileUpload">FILE</label>
+                            <div class="video-block">
+                                <div class="video-image" @onclick="() => ChangeVideo(video)">
+                                    @if (video.SourceType == VideoSourceType.Local)
+                                    {
+                                        <img class="image-blur" src="@($"api/Videos/getframe/{RoomData.Id}_{video.FileName}-{video.CurrentTime}")">
+                                        <div class="image-window">
+                                            <img class="image" src="@($"api/Videos/getframe/{RoomData.Id}_{video.FileName}-{video.CurrentTime}")">
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <img class="image-blur" src="@($"https://img.youtube.com/vi/{video.YouTubeId}/hqdefault.jpg")">
+                                        <div class="image-window">
+                                            <img class="image" src="@($"https://img.youtube.com/vi/{video.YouTubeId}/hqdefault.jpg")">
+                                        </div>
+                                    }
+                                    <div class="img-shadow" />
+                                    <p class="video-name">@video.FriendlyName</p>
+                                </div>
+
+                                <div class="video-bottom">
+                                    <div class="arrow-container arrow-container-left" @onclick="() => MoveVideoUp(video)">
+                                        <svg width="23" height="23">
+                                            <g id="Arrow / Arrow_Up_SM">
+                                                <path id="Vector" d="M12 17V7M12 7L8 11M12 7L16 11" stroke="#AFAFAF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                            </g>
+                                        </svg>
+                                    </div>
+                                    <div class="arrow-container" @onclick="() => RemoveVideo(video)">
+                                        <p>X</p>
+                                    </div>
+                                    <div class="arrow-container arrow-container-right" @onclick="() => MoveVideoDown(video)">
+                                        <svg width="23" height="23">
+                                            <g id="Arrow / Arrow_Up_SM">
+                                                <path id="Vector" d="M12 17V7M12 7L8 11M12 7L16 11" stroke="#AFAFAF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                            </g>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        <div class="add-video-block">
+                            <div class="add-video-block-part add-youtube">
+                                <InputText  @bind-Value="tempYTurl" 
+                                            title="URL of the youtube video" 
+                                            placeholder="youtube URL"/>
+                                <div class="button" @onclick="AddYouTubeVideo">ADD</div>
+                            </div>
+                            <div class="add-video-block-part">
+                                @if (progress is null)
+                                {
+                                    <label for="fileUpload">FILE</label>
+                                }
+                                else
+                                {
+                                    <label @onclick="() => FileUploadCTS.Cancel()">@progress.Value.ToString("0.00")%</label>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+            
+                    <div class="name-area">
+                        <div class="name">
+                            <p>@RoomData?.CurrentVideo?.FriendlyName</p>
+                            @if (isRenamingVideo)
+                            {
+                                <input @bind-value="tempNewVideoName" />
+                            }
+                        </div>
+                        <button class="button" @onclick="() => {
+                                    if (isRenamingVideo)
+                                        RenameVideo(RoomData?.CurrentVideo, tempNewVideoName);
+                                    else
+                                        tempNewVideoName = RoomData?.CurrentVideo?.FriendlyName;
+
+                                    isRenamingVideo = !isRenamingVideo;
+                        }">Rename</button>
+                    </div>
+
+                    <div class="video-area">
+                        @if (RoomData?.CurrentVideo?.SourceType == VideoSourceType.Local)
+                        {
+                            <VideoComponentFile @ref="videoTt"
+                                                Video="@(RoomData.CurrentVideo)"
+                                                DoShowControls="@CanControlVideo" />
+                        }
+                        else if (RoomData?.CurrentVideo?.SourceType == VideoSourceType.YouTube)
+                        {
+	                        <VideoComponentYT @ref="videoTt"
+                                              Video="@(RoomData.CurrentVideo)"
+                                              DoShowControls="@CanControlVideo"/>
+                        }
+                    </div>
+
+                    @if (User is not null && User.Id == RoomData?.Owner?.Id)
+                    {
+                        <button @onclick="RemoveRoom">Remove room</button>
+                    }
+
+                </div>
+                <div class="participants-list">
+                    <div class="admin">
+                        <p>Owner:</p>
+                        @if (RoomData?.Participants.Contains(RoomData.Owner) == true)
+                        {
+                            <p>@RoomData.Owner.UserName</p>
                         }
                         else
                         {
-                            <label @onclick="() => FileUploadCTS.Cancel()">@progress.Value.ToString("0.00")%</label>
+                            <p class="not-present">@RoomData.Owner.UserName</p>
                         }
                     </div>
-                </div>
-            </div>
-
-            
-            <div class="name-area">
-                <div class="name">
-                    <p>@RoomData?.CurrentVideo?.FriendlyName</p>
-                    @if (isRenamingVideo)
+                    @foreach (ApplicationUser participant in RoomData?.Participants)
                     {
-                        <input @bind-value="tempNewVideoName" />
+                        <p>@participant.UserName</p>
+                    }
+                    @foreach (string guest in RoomsGuests.GetGuests(roomId))
+                    {
+                        <p>Guest: @guest</p>
                     }
                 </div>
-                <button class="button" @onclick="() => {
-                            if (isRenamingVideo)
-                                RenameVideo(RoomData?.CurrentVideo, tempNewVideoName);
-                            else
-                                tempNewVideoName = RoomData?.CurrentVideo?.FriendlyName;
-
-                            isRenamingVideo = !isRenamingVideo;
-                }">Rename</button>
             </div>
-
-            <div class="video-area">
-                @if (RoomData?.CurrentVideo?.SourceType == VideoSourceType.Local)
-                {
-                    <VideoComponentFile @ref="videoTt"
-                                        Video="@(RoomData.CurrentVideo)"
-                                        DoShowControls="@CanControlVideo" />
-                }
-                else if (RoomData?.CurrentVideo?.SourceType == VideoSourceType.YouTube)
-                {
-	                <VideoComponentYT @ref="videoTt"
-                                      Video="@(RoomData.CurrentVideo)"
-                                      DoShowControls="@CanControlVideo"/>
-                }
-            </div>
-
-            <hr>
-
-            @if (User is not null && User.Id == RoomData?.Owner?.Id)
-            {
-                <button @onclick="RemoveRoom">Remove room</button>
-            }
-
-            @foreach (ApplicationUser participant in RoomData?.Participants)
-            {
-                <p>@participant.UserName</p>
-            }
-            @foreach (string guest in RoomsGuests.GetGuests(roomId))
-            {
-                <p>Guest: @guest</p>
-            }
             #endregion 
         }
         else if (roomViewState == RoomViewState.NoAccess)

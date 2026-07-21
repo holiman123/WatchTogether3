@@ -18,7 +18,7 @@
     border: none;
 }
 
-    .vcf-block button:hover {
-        background-color: transparent;
-        font-size: 84px;
-    }
+.vcf-block button:hover {
+    background-color: transparent;
+    font-size: 84px;
+}
