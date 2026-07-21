@@ -1,33 +1,4 @@
-﻿.body {
-    margin-left: 50px;
-}
-
-.top {
-    display: flex;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    margin-bottom: 30px;
-    margin-top: 30px;
-    margin-left: 200px;
-    justify-content: space-between;
-    align-items: center;
-    color: var(--text-primary);
-}
-
-.top p {
-    margin: 0;
-    font-size: 36px;
-}
-
-.bottom {
-    margin-top: 75px;
-    position: relative;
-    justify-content: center;
-}
-
-
+﻿
 .image {
     margin: auto;
     width: 250px;
@@ -251,6 +222,8 @@
 .participants-list p {
     margin: 0;
     letter-spacing: 3px;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .participants-list .admin {

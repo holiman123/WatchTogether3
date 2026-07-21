@@ -8,22 +8,25 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject NavigationManager Navigation
 
-<h1>Manage your account</h1>
-
-<div>
-    <h2>Change your account settings</h2>
-    <hr />
-    <div class="row">
-        <div class="col-lg-3">
-            <ManageNavMenu />
+<div class="body">
+    <div class="top">
+        <p>Manage your account</p>
+    </div>
+    <div class="bottom">
+        <h2>Change your account settings</h2>
+        <hr />
+        <div class="row">
+            <div class="col-lg-3">
+                <ManageNavMenu />
+            </div>
+            <div class="col-lg-9">
+                @Body
+            </div>
+            <form method="post" @onsubmit="Logout" @formname="logout-form">
+                <AntiforgeryToken />
+                <button type="submit">Logout</button>
+            </form>
         </div>
-        <div class="col-lg-9">
-            @Body
-        </div>
-        <form method="post" @onsubmit="Logout" @formname="logout-form">
-            <AntiforgeryToken/>
-            <button type="submit">Logout</button>
-        </form>
     </div>
 </div>
 

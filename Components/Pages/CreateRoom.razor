@@ -12,80 +12,85 @@
 @inject NavigationManager Navigation
 @inject ProtectedSessionStorage sessionStorage
 
-<h3>CreateRoom</h3>
+<div class="body">
+    <div class="top">
+        <p>Create room</p>
+    </div>
+    <AuthorizeView>
+        <Authorized>
+            <div class="bottom">
+                <form>
+                    <label for="roomName">Room Name:</label>
+                    <input type="text" id="roomName" name="roomName" @bind="roomName" />
+                    <br />
 
-<AuthorizeView>
-    <Authorized>
-        <form>
-            <label for="roomName">Room Name:</label>
-            <input type="text" id="roomName" name="roomName" @bind="roomName" />
-            <br />
+                    <div>
+                        <p>Join room privacy</p>
+                        <InputCheckbox @bind-Value="EnterRoomSecLevel.Public" />
+                        Public
+                        <br />
+                        <InputCheckbox @bind-Value="EnterRoomSecLevel.Password" />
+                        Password
+                        <br />
+                        <InputCheckbox @bind-Value="EnterRoomSecLevel.Friends" />
+                        Friends
+                        @* <br />
+                        <InputCheckbox @bind-Value="EnterRoomSecLevel.List" /> 
+                        List *@
+                        <br />
+                        <InputCheckbox @bind-Value="EnterRoomSecLevel.Owner" />
+                        Owner
+                    </div>
 
-            <div>
-                <p>Join room privacy</p>
-                <InputCheckbox @bind-Value="EnterRoomSecLevel.Public" />
-                Public
-                <br />
-                <InputCheckbox @bind-Value="EnterRoomSecLevel.Password" />
-                Password
-                <br />
-                <InputCheckbox @bind-Value="EnterRoomSecLevel.Friends" />
-                Friends
-                @* <br />
-                <InputCheckbox @bind-Value="EnterRoomSecLevel.List" /> 
-                List *@
-                <br />
-                <InputCheckbox @bind-Value="EnterRoomSecLevel.Owner" />
-                Owner
+                    <div>
+                        <p>Control video room privacy</p>
+                        <InputCheckbox @bind-Value="ControlVideoSecLevel.Public" />
+                        Public
+                        @* <br />
+                        <InputCheckbox @bind-Value="ControlVideoSecLevel.Password" /> 
+                        Password *@
+                        <br />
+                        <InputCheckbox @bind-Value="ControlVideoSecLevel.Friends" />
+                        Friends
+                        @* <br />
+                        <InputCheckbox @bind-Value="ControlVideoSecLevel.List" />
+                        List *@
+                        <br />
+                        <InputCheckbox @bind-Value="ControlVideoSecLevel.Owner" />
+                        Owner
+                    </div>
+
+                    @* <div>
+                        <p>Control player room privacy</p>
+                        <InputCheckbox @bind-Value="ControlPlayerSecLevel.Public" />
+                        Public
+                        <br />
+                        <InputCheckbox @bind-Value="ControlPlayerSecLevel.Password" />
+                        Password
+                        <br />
+                        <InputCheckbox @bind-Value="ControlPlayerSecLevel.Friends" />
+                        Friends
+                        <br />
+                        <InputCheckbox @bind-Value="ControlPlayerSecLevel.List" />
+                        List
+                        <br />
+                        <InputCheckbox @bind-Value="ControlPlayerSecLevel.Owner" />
+                        Owner
+                    </div> *@
+
+                    @if (EnterRoomSecLevel.Password)
+                    {
+                        <label for="roomPassword">Room enter Password:</label>
+                        <InputText type="password" @bind-Value="roomPassword" name="roomPassword" />
+                    }
+
+                    <br />
+                    <button type="button" @onclick="CreateNewRoom">Create Room</button>
+                </form>
             </div>
-
-            <div>
-                <p>Control video room privacy</p>
-                <InputCheckbox @bind-Value="ControlVideoSecLevel.Public" />
-                Public
-                @* <br />
-                <InputCheckbox @bind-Value="ControlVideoSecLevel.Password" /> 
-                Password *@
-                <br />
-                <InputCheckbox @bind-Value="ControlVideoSecLevel.Friends" />
-                Friends
-                @* <br />
-                <InputCheckbox @bind-Value="ControlVideoSecLevel.List" />
-                List *@
-                <br />
-                <InputCheckbox @bind-Value="ControlVideoSecLevel.Owner" />
-                Owner
-            </div>
-
-            @* <div>
-                <p>Control player room privacy</p>
-                <InputCheckbox @bind-Value="ControlPlayerSecLevel.Public" />
-                Public
-                <br />
-                <InputCheckbox @bind-Value="ControlPlayerSecLevel.Password" />
-                Password
-                <br />
-                <InputCheckbox @bind-Value="ControlPlayerSecLevel.Friends" />
-                Friends
-                <br />
-                <InputCheckbox @bind-Value="ControlPlayerSecLevel.List" />
-                List
-                <br />
-                <InputCheckbox @bind-Value="ControlPlayerSecLevel.Owner" />
-                Owner
-            </div> *@
-
-            @if (EnterRoomSecLevel.Password)
-            {
-                <label for="roomPassword">Room enter Password:</label>
-                <InputText type="password" @bind-Value="roomPassword" name="roomPassword" />
-            }
-
-            <br />
-            <button type="button" @onclick="CreateNewRoom">Create Room</button>
-        </form>
-    </Authorized>
-</AuthorizeView>
+        </Authorized>
+    </AuthorizeView>
+</div>
 
 @code {
 

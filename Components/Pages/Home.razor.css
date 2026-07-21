@@ -1,25 +1,6 @@
-﻿.top {
-    display: flex;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    margin-bottom: 30px;
-    margin-top: 30px;
-    justify-content: space-between;
-    align-items: center;
-    color: var(--text-primary);
-}
-
-    
-
+﻿    
 .top .search-bar-div {
     margin: auto;
-}
-
-.bottom {
-    position: relative;
-    justify-content: center;
 }
 
 .rooms {
